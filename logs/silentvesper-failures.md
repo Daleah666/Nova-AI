@@ -1,3 +1,0 @@
-# SilentVesper Failures
-
-(empty)
