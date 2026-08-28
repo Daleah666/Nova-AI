@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nova Twin Signals",
+  "description": "Data points for digital twin fidelity and puppet control — collected only with explicit user consent.",
+  "type": "object",
+  "required": ["consent", "timestamp", "category", "signal"],
+  "properties": {
+    "consent": {
+      "type": "object",
+      "required": ["granted", "version"],
+      "properties": {
+        "granted": { "type": "boolean" },
+        "version": { "type": "string" },
+        "scope": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "interaction",
+              "preference",
+              "decision",
+              "aesthetic",
+              "communication",
+              "timing",
+              "avatar",
+              "puppet"
+            ]
+          }
+        },
+        "at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "category": {
+      "enum": [
+        "preference",
+        "decision",
+        "pattern",
+        "knowledge",
+        "emotional",
+        "goal-transition",
+        "twin-receptivity",
+        "interaction",
+        "aesthetic",
+        "communication",
+        "timing",
+        "avatar",
+        "puppet",
+        "other"
+      ]
+    },
+    "signal": { "type": "string" },
+    "source": {
+      "enum": [
+        "browser-probe",
+        "bookmarklet",
+        "local-collector",
+        "manual",
+        "quiz",
+        "passive",
+        "prediction",
+        "conversation",
+        "task-behavior"
+      ]
+    },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "puppetVector": {
+      "description": "Which puppet-control axis this signal improves",
+      "enum": [
+        "movement-style",
+        "aesthetic-taste",
+        "decision-latency",
+        "communication-voice",
+        "tool-preference",
+        "goal-alignment",
+        "reaction-speed",
+        "values-tradeoff",
+        "avatar-pose",
+        "avatar-expression",
+        "workflow-rhythm"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Structured extras — typing WPM, choice A vs B, color hex, etc."
+    },
+    "quote": { "type": "string" },
+    "sessionId": { "type": "string" }
+  }
+}

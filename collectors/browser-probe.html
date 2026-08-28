@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nova Twin Probe — Digital Puppet Data</title>
+  <style>
+    :root {
+      --bg: #0d0d12;
+      --surface: #16161f;
+      --border: #2a2a3a;
+      --accent: #a78bfa;
+      --accent2: #f472b6;
+      --text: #e8e8f0;
+      --muted: #8888a0;
+      --ok: #4ade80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { margin-bottom: 2rem; }
+    h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.35rem; }
+    .status-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 1rem; font-size: 0.85rem; color: var(--muted);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+    .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .dot.off { background: #ef4444; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .panel h2 { font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent); }
+    .hidden { display: none !important; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+    .scopes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+    .scopes label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text); }
+    button, .btn-row button {
+      background: var(--accent);
+      color: #111;
+      border: none;
+      padding: 0.6rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover { filter: brightness(1.1); }
+    button.secondary { background: var(--border); color: var(--text); }
+    button.danger { background: #7f1d1d; color: #fecaca; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .choice-grid button {
+      background: var(--border);
+      color: var(--text);
+      font-weight: 500;
+    }
+    .choice-grid button.picked { outline: 2px solid var(--accent); background: #2d2d44; }
+    textarea, select, input[type="color"], input[type="range"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.65rem;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+    textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+    #color-preview {
+      height: 40px; border-radius: 8px; margin-bottom: 0.75rem;
+      background: #a78bfa; border: 1px solid var(--border);
+    }
+    .fine { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+    #sync-result { color: var(--ok); font-size: 0.85rem; margin-left: 0.5rem; }
+    footer { margin-top: 2rem; font-size: 0.75rem; color: var(--muted); }
+    footer code { background: var(--surface); padding: 0.15rem 0.4rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Nova Twin Probe</h1>
+      <p class="sub">Consent-based data for your digital twin &amp; avatar puppet control. Local only. You request it — we collect it.</p>
+      <div class="status-bar">
+        <span class="dot off" id="status-dot"></span>
+        <span id="status-text">Consent required</span>
+        <span>·</span>
+        <span id="server-status">Checking server…</span>
+      </div>
+    </header>
+
+    <!-- Consent panel -->
+    <section class="panel" id="consent-panel">
+      <h2>Opt in</h2>
+      <p class="fine">This sets a first-party cookie + localStorage consent token. Data stays on your machine and flows into <code>logs/user-model.md</code> via the local collector. Revoke anytime.</p>
+      <p style="margin: 0.75rem 0 0.35rem; font-size: 0.85rem;">Collect scopes:</p>
+      <div class="scopes">
+        <label><input type="checkbox" name="scope" value="interaction" checked /> Interaction</label>
+        <label><input type="checkbox" name="scope" value="preference" checked /> Preferences</label>
+        <label><input type="checkbox" name="scope" value="decision" checked /> Decisions</label>
+        <label><input type="checkbox" name="scope" value="aesthetic" checked /> Aesthetic</label>
+        <label><input type="checkbox" name="scope" value="communication" checked /> Communication</label>
+        <label><input type="checkbox" name="scope" value="avatar" checked /> Avatar</label>
+        <label><input type="checkbox" name="scope" value="puppet" checked /> Puppet control</label>
+      </div>
+      <button id="grant-btn">Grant consent &amp; start probe</button>
+    </section>
+
+    <!-- Probe panel -->
+    <section class="panel hidden" id="probe-panel">
+      <h2>Puppet control probes</h2>
+      <p class="fine">Each choice maps to a puppet vector your twin uses to mirror you.</p>
+
+      <label style="margin-top: 1rem">Detail level preference</label>
+      <div class="choice-grid">
+        <button data-label="Detail level" data-choice="short and direct" data-vector="communication-voice">Short &amp; direct</button>
+        <button data-label="Detail level" data-choice="deep explanations" data-vector="communication-voice">Deep explanations</button>
+      </div>
+
+      <label style="margin-top: 1rem">Workflow rhythm</label>
+      <div class="choice-grid">
+        <button data-label="Workflow" data-choice="research then plan then ship" data-vector="workflow-rhythm" data-category="pattern">Research → Plan → Ship</button>
+        <button data-label="Workflow" data-choice="jump in and iterate" data-vector="workflow-rhythm" data-category="pattern">Jump in &amp; iterate</button>
+      </div>
+
+      <label style="margin-top: 1rem">Tool preference (when stuck)</label>
+      <div class="choice-grid">
+        <button data-label="When stuck" data-choice="search docs first" data-vector="tool-preference">Docs first</button>
+        <button data-label="When stuck" data-choice="ask AI immediately" data-vector="tool-preference">Ask AI first</button>
+      </div>
+
+      <label style="margin-top: 1rem">Default avatar mood</label>
+      <select id="avatar-mood">
+        <option value="">— pick one —</option>
+        <option value="confident">Confident</option>
+        <option value="playful">Playful</option>
+        <option value="focused">Focused</option>
+        <option value="mysterious">Mysterious</option>
+        <option value="warm">Warm</option>
+      </select>
+
+      <label>Accent color (aesthetic taste)</label>
+      <div id="color-preview"></div>
+      <input type="color" id="color-pick" value="#a78bfa" />
+
+      <label>Speed vs polish (values tradeoff)</label>
+      <input type="range" id="speed-polish" min="0" max="100" value="50" />
+      <p class="fine" id="speed-polish-label">Balanced</p>
+
+      <label style="margin-top: 1rem">Voice sample — type like you normally chat</label>
+      <textarea id="voice-sample" placeholder="how you'd actually say something to a friend…"></textarea>
+
+      <div class="btn-row">
+        <button id="sync-btn" class="secondary">Sync twin → logs</button>
+        <button id="export-btn" class="secondary">Export puppet profile</button>
+        <button id="revoke-btn" class="danger">Revoke consent</button>
+        <span id="sync-result"></span>
+      </div>
+    </section>
+
+    <footer>
+      <p>Runs optimized — no chat interruptions. Auto-flush at 5+ signals.</p>
+      <p style="margin-top: 0.5rem">Bookmarklet for any page: drag <a href="javascript:(function(){var s=document.createElement('script');s.src='http://127.0.0.1:9477/bookmarklet.js';document.body.appendChild(s);})();">Nova Twin Snippet</a> to bookmarks (server must be running).</p>
+    </footer>
+  </div>
+  <script src="browser-probe.js"></script>
+</body>
+</html>

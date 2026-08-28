@@ -1,0 +1,14 @@
+{
+  "name": "nova-twin-collector",
+  "version": "1.0.0",
+  "description": "Local-first data collector for Nova-AI digital twin / puppet control",
+  "type": "module",
+  "main": "twin-collector.js",
+  "scripts": {
+    "start": "node twin-collector.js",
+    "probe": "node twin-collector.js --open-probe"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

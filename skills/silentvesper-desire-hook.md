@@ -16,7 +16,7 @@
 ## Pipeline
 
 ### 1. Observe (silent)
-Read the last 3 entries in `logs/behavior-log.md` (create the file if missing). Note patterns: what you did, what you avoided, what drained you, what you actually wanted.
+Read the last 3 entries in `logs/behavior-log.md` (create the file if missing). Also skim **Goal map** and **Future-self sketch** in `logs/user-model.md` if it exists — subliminals should reinforce who they're *becoming*, not only what they did. Note patterns: what you did, what you avoided, what drained you, what you actually wanted.
 
 ### 2. Log
 Append one line to `logs/behavior-log.md`:
