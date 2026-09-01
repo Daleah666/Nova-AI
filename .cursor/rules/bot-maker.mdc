@@ -1,0 +1,13 @@
+---
+description: >-
+  When the user wants to create or design a bot, character, NPC, persona,
+  companion, text-adventure protagonist, avatar, or character RPG profile,
+  read skills/bot-maker/SKILL.md before answering.
+alwaysApply: false
+---
+
+# Bot Maker
+
+If the user asks to create or design a **bot, character, NPC, persona, companion, text-adventure protagonist, avatar, SillyTavern card, or tabletop-style character sheet** (stats, quirks, curses — not loot/combat rounds), read `skills/bot-maker/SKILL.md` first and follow it.
+
+Do not improvise a parallel character format. Schema field names live in `skills/bot-maker/references/character-schema.yaml`.

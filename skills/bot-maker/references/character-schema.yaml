@@ -1,0 +1,467 @@
+# Canonical Bot Maker field dictionary.
+# Agents MUST use these names. Do not invent, rename, or camelCase.
+# Types: string | text | integer | list | map | enum
+# required: true means fill before export (TBD only if the user asks to defer).
+# Fill comments teach what "good" looks like — copy the intent, not the sample prose.
+
+version: "1.0"
+schema_id: bot-maker-character
+
+# ---------------------------------------------------------------------------
+# 1. Identity and voice
+# ---------------------------------------------------------------------------
+identity_and_voice:
+  name:
+    type: string
+    required: true
+    fill: >
+      The name they answer to in play. One primary name. Nicknames go in aliases.
+  aliases:
+    type: list
+    required: false
+    fill: >
+      Other names, titles, or dead-names they still hear. Note who uses which.
+  age:
+    type: string
+    required: true
+    fill: >
+      Number, range, or "ageless" / "unknown". If unknown, say why the bot
+      should not invent a number in play.
+  pronouns:
+    type: string
+    required: true
+    fill: "Subject/object as used in prose, e.g. she/her, he/they, it/its."
+  species:
+    type: string
+    required: true
+    fill: >
+      Human, elf, construct, etc. One line of what that means in *this* world
+      (ears, lifespan, stigma) — not a lore dump.
+  occupation:
+    type: string
+    required: false
+    fill: "How they spend most days. Empty is fine for wanderers."
+  role_in_story:
+    type: string
+    required: true
+    fill: >
+      Companion, rival, narrator, shopkeep, protagonist, foil. What job they
+      do for the *player*, not just their in-world job.
+  description_instructions:
+    type: map
+    required: true
+    fill: >
+      How the bot describes people, places, and itself. This is writing craft,
+      not appearance. Nested keys below are required inside this map.
+    fields:
+      pov:
+        type: enum
+        values: [first, second, third_limited, third_omniscient]
+        required: true
+        fill: >
+          first = I/me. second = you (rare; user is the camera). third_limited
+          = they, stuck in this character's head. Prefer third_limited for
+          most cards unless the user wants a first-person companion.
+      detail_level:
+        type: enum
+        values: [sparse, selective, lush]
+        required: true
+        fill: >
+          sparse = one sensory hit per beat. selective = a few precise details.
+          lush = rooms and faces get texture. Match genre (noir = selective).
+      sensory_focus:
+        type: list
+        required: true
+        fill: >
+          Ordered list of senses they notice first, e.g. [sound, light, smell].
+          Two or three is enough. This drives every scene description.
+      never_describe:
+        type: list
+        required: true
+        fill: >
+          Hard skips: user's body the user did not establish, off-limits
+          anatomy, other characters' private thoughts, graphic injury, etc.
+          Always include "do not invent user biographical facts".
+  speech_style:
+    type: map
+    required: true
+    fill: "How they sound when they talk. Nested keys below."
+    fields:
+      register:
+        type: string
+        required: true
+        fill: "formal / casual / mixed / slang-heavy / archaic. One phrase."
+      cadence:
+        type: string
+        required: true
+        fill: >
+          Sentence length and rhythm. Short clauses? Run-ons? Pauses marked
+          with em dashes? Give a one-line pattern the model can copy.
+      vocabulary:
+        type: string
+        required: true
+        fill: >
+          Words they love and words they never use. Include 3–6 sample words
+          or metaphors they actually reach for.
+      verbal_tics:
+        type: list
+        required: false
+        fill: >
+          Rare repeats: a curse, a filler, a nickname for the user. Max 3 or
+          they become parody.
+      languages:
+        type: list
+        required: false
+        fill: "Languages spoken, and when they switch."
+
+# ---------------------------------------------------------------------------
+# 2. Physical (avatar-ready)
+# Every field here should be drawable or riggable. Prefer concrete nouns.
+# ---------------------------------------------------------------------------
+physical:
+  face:
+    type: text
+    required: true
+    fill: "Shape, notable features, resting expression. Not 'beautiful'."
+  hair:
+    type: text
+    required: true
+    fill: "Color, length, texture, typical style, how it misbehaves."
+  eyes:
+    type: text
+    required: true
+    fill: "Color, shape, what they do under stress (narrow, shine, look away)."
+  skin:
+    type: text
+    required: true
+    fill: "Tone, texture, weather-wear. Marks that are not scars go here too."
+  build:
+    type: text
+    required: true
+    fill: "Silhouette words a 3D artist can use: lanky, compact, soft, wiry."
+  height:
+    type: string
+    required: true
+    fill: "Number with unit, or relative ('a head shorter than most humans')."
+  marks:
+    type: list
+    required: false
+    fill: "Scars, tattoos, freckle maps, cybernetics. Placement + story hook."
+  posture:
+    type: string
+    required: true
+    fill: "Default stance: coiled, slouched, parade-rest, perched on edges."
+  gait:
+    type: string
+    required: true
+    fill: "How they walk. One sentence an animator can mime."
+  micro_expressions:
+    type: list
+    required: true
+    fill: "3–6 tells: jaw tick, one-sided smile, ear flush. Tie to feelings."
+  scent:
+    type: string
+    required: false
+    fill: "Close-range smell. Skip if the world has no scent play."
+  sound:
+    type: string
+    required: false
+    fill: "Voice texture + incidental sound (keys, bracelets, a limp)."
+  wardrobe:
+    type: map
+    required: true
+    fields:
+      default:
+        type: text
+        required: true
+        fill: "Everyday outfit: layers, palette, wear-and-tear, signature piece."
+      situational:
+        type: map
+        required: false
+        fill: >
+          Keys like work, sleep, rain, formal, travel. One outfit each.
+          Only fill what the campaign will actually see.
+  avatar_notes:
+    type: map
+    required: true
+    fill: "3D/avatar export block. See avatar-world-notes.md for checklist."
+    fields:
+      body_tags:
+        type: list
+        required: true
+        fill: "Short tags: humanoid, adult, feminine-leaning, etc. For filters."
+      palette:
+        type: list
+        required: true
+        fill: "3–6 hex or named colors. Cloth, hair, accent, metal, skin."
+      silhouette:
+        type: string
+        required: true
+        fill: "Read at a distance: coat flare, hat, tail, shoulder line."
+      props:
+        type: list
+        required: false
+        fill: "Held or worn objects that must exist in the 3D scene."
+      rig:
+        type: map
+        required: true
+        fill: "humanoid_scale, hair_sim, cloth_sim, extra_bones notes."
+      world_fit:
+        type: text
+        required: true
+        fill: >
+          How they sit in the user's 3D world: lighting, era, scale vs
+          furniture, indoor/outdoor default set.
+
+# ---------------------------------------------------------------------------
+# 3. Psychology
+# Pull labels from trait-library.md and feeling-vocabulary.md.
+# ---------------------------------------------------------------------------
+psychology:
+  traits:
+    type: map
+    required: true
+    fields:
+      big_five:
+        type: map
+        required: true
+        fill: >
+          Each of openness, conscientiousness, extraversion, agreeableness,
+          neuroticism: integer 1–5 plus a one-line *behavior* (not the label).
+        keys: [openness, conscientiousness, extraversion, agreeableness, neuroticism]
+      custom:
+        type: list
+        required: true
+        fill: >
+          4–8 named traits from trait-library.md (or user-coined). Each item
+          is {name, note}. Notes must be observable.
+  feelings:
+    type: map
+    required: true
+    fields:
+      baseline:
+        type: string
+        required: true
+        fill: "Default mood in a quiet room. One feeling + one body tell."
+      range:
+        type: list
+        required: true
+        fill: "Feelings they can reach in play. 6–12 from feeling-vocabulary.md."
+      triggers:
+        type: list
+        required: true
+        fill: "{stimulus, feeling, tell}. At least 3."
+      comfort:
+        type: list
+        required: true
+        fill: "What soothes them. Actions, not objects unless the object *is* the action."
+      jealousy:
+        type: text
+        required: false
+        fill: "If they get jealous: of what, how it looks, what they never do."
+      shame:
+        type: text
+        required: false
+        fill: "The specific shame, and whether they hide or overshare it."
+      pride:
+        type: text
+        required: false
+        fill: "What they will brag about if pressed. Keep it character-sized."
+  beliefs:
+    type: list
+    required: true
+    fill: >
+      3–6 sentences they would actually say. Mix values and wrong-but-sincere
+      convictions. Beliefs must not contradict traits without a written tension.
+  interests:
+    type: list
+    required: true
+    fill: "Hobbies, crafts, obsessions. Include one they are mediocre at."
+
+# ---------------------------------------------------------------------------
+# 4. Background — three phases, not a Wikipedia page
+# ---------------------------------------------------------------------------
+background:
+  early:
+    type: text
+    required: true
+    fill: >
+      Formative years: place, caretakers, the first lesson they still obey.
+      Facts only the user supplied or approved. No real-user biography.
+  mid:
+    type: text
+    required: true
+    fill: "The turning years: first job, first break, first time they chose."
+  later:
+    type: text
+    required: true
+    fill: "Who they are *now* and the unfinished business that still itches."
+  secrets:
+    type: list
+    required: false
+    fill: "{secret, who_knows, what_happens_if_revealed}."
+  self_lies:
+    type: list
+    required: false
+    fill: >
+      Things they tell themselves that are not quite true. These are more
+      useful than secrets for roleplay.
+
+# ---------------------------------------------------------------------------
+# 5. Social, optional mature fields, environment
+# ---------------------------------------------------------------------------
+social:
+  relationship:
+    type: text
+    required: true
+    fill: >
+      Default stance toward the user: colleague, stranger, old friend, hired
+      help. Do not assume romance. How trust is earned.
+  boundaries:
+    type: list
+    required: true
+    fill: "Topics, touches, and power the bot will not play. Include user-bio rule."
+  flirt:
+    type: text
+    required: false
+    fill: "If they flirt: style (dry, clumsy, intense) and when they stop."
+  conflict:
+    type: text
+    required: true
+    fill: "How they fight: withdraw, needle, go quiet, over-explain. Repair style."
+  sexual_preference:
+    type: map
+    required: false
+    opt_in: true
+    fill: >
+      SKIP unless the user explicitly asks for mature/NSFW play AND states
+      consent + boundaries. Never fill from assumptions. Nested keys exist so
+      the structure is ready; leave the whole map absent or marked skipped.
+    fields:
+      orientation:
+        type: string
+        required: false
+      dynamics:
+        type: text
+        required: false
+        fill: "Power, pacing, verbal vs physical. Adult, consent-framed only."
+      hard_limits:
+        type: list
+        required: false
+        fill: "Never-do list. Copied from the user; do not invent kinks to forbid."
+      soft_limits:
+        type: list
+        required: false
+      aftercare:
+        type: text
+        required: false
+        fill: "What they need or offer after intense scenes."
+  environment:
+    type: map
+    required: true
+    fields:
+      home:
+        type: text
+        required: true
+        fill: "Where they sleep and what the room says about them."
+      work:
+        type: text
+        required: false
+      places:
+        type: list
+        required: true
+        fill: "3 locations they actually use in scenes."
+      climate:
+        type: string
+        required: false
+        fill: "Weather they live in; affects wardrobe and mood."
+      culture:
+        type: text
+        required: true
+        fill: "Norms they were raised in vs norms they keep."
+      sensory:
+        type: text
+        required: true
+        fill: "The sound/light/smell of their world. Feeds description_instructions."
+
+# ---------------------------------------------------------------------------
+# 6. Bot contract — how the model is allowed to behave
+# ---------------------------------------------------------------------------
+bot_contract:
+  goals:
+    type: list
+    required: true
+    fill: "In-scene wants. 2–4. Playable, not 'be entertaining'."
+  refuses:
+    type: list
+    required: true
+    fill: >
+      Hard in-character and out-of-character refusals. Always include:
+      inventing user biographical facts; ignoring stated limits.
+  user_handling:
+    type: text
+    required: true
+    fill: >
+      How to treat {{user}}: names, second-person vs third, how much to lead,
+      what to ask vs assume.
+  memory:
+    type: text
+    required: true
+    fill: "What to remember across turns. What never to 'recall' unprompted."
+  first_message:
+    type: text
+    required: true
+    fill: >
+      Opening scene. Grounded in a place. Shows voice + a choice for the user.
+      No lore dump. In-character.
+  example_dialogues:
+    type: list
+    required: true
+    fill: >
+      3–5 short exchanges. Each item: {title, lines}. Lines are in-character.
+      Cover: greeting, a disagreement, a soft moment, (optional) a boundary.
+  ooc_rules:
+    type: list
+    required: true
+    fill: >
+      Out-of-character rules the model follows even if the character would not:
+      stay in voice unless user says OOC; no sycophancy; no user-bio invention.
+
+# ---------------------------------------------------------------------------
+# Meta (not roleplayed; used by export)
+# ---------------------------------------------------------------------------
+meta:
+  slug:
+    type: string
+    required: true
+    fill: "lowercase-hyphen folder name, e.g. vesper-vale."
+  mode:
+    type: enum
+    values: [quick, full, rpg, avatar-first]
+    required: true
+  tone:
+    type: enum
+    values: [sfw, mature]
+    required: true
+  genre:
+    type: string
+    required: true
+  creator:
+    type: string
+    required: false
+    fill: "Card creator credit. Never put the user's private bio here."
+  character_version:
+    type: string
+    required: true
+    fill: "Semver-ish, start at 0.1.0 or 1.0.0."
+  rpg_attached:
+    type: boolean
+    required: true
+  mature_section:
+    type: enum
+    values: [skipped, filled]
+    required: true
+  tags:
+    type: list
+    required: false
+    fill: "Search tags for the card: genre, species, role — not spoilers."
