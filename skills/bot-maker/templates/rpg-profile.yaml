@@ -1,0 +1,77 @@
+# RPG profile scaffold. Attach when meta.rpg_attached is true.
+# Rules: references/rpg-system.md — no combat-round loop, no loot tables.
+
+character_slug: ""
+scale: "1-10" # 1-10 | 3-18
+notes: "Derived from personality; keep the array uneven."
+
+attributes:
+  MIGHT: 5
+  FINESSE: 5
+  MIND: 5
+  HEART: 5
+  SPIRIT: 5
+  LUCK: 5
+
+skills: []
+# - name: Notice
+#   attribute: MIND
+#   rating: 6
+#   when: "Clues, tells, inconsistencies"
+
+quirks: []
+# - name: ""
+#   bonus: ""
+#   drawback: ""
+#   rp: ""
+
+curses_blessings: []
+# - kind: curse # curse | blessing
+#   name: ""
+#   trigger: ""
+#   effect: ""
+#   rp: ""
+
+conditions_available:
+  - Afraid
+  - Obsessed
+  - Drained
+  - Inspired
+  - Shame-sick
+  - Beloved
+  - Hollow
+  - Wired
+
+conditions_active: []
+# - name: Afraid
+#   source: ""
+
+resources:
+  HP: null # set or delete keys you are not using
+  Stress: null
+  Mana_Energy: null
+  Reputation: null
+  Corruption: null
+
+# Example noir subset (delete the null block above and use):
+# resources:
+#   HP: 7
+#   Stress: 0
+#   Stress_cap: 4
+#   Reputation: 5
+#   Reputation_label: "unknown in this district"
+
+progression:
+  tier: 0
+  xp_label: "" # cases closed, nights survived, vows kept
+  next_milestone: ""
+
+campaign:
+  location: ""
+  quest_flags: {}
+  faction_standing: {}
+  inventory: []
+  # - name: ""
+  #   meaning: ""
+
+prompt_heading: "## Mechanics (RPG)"
