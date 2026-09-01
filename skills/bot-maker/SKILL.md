@@ -11,9 +11,13 @@ description: >-
 
 # Bot Maker
 
-Turn a rough idea into a **playable character bot**: psychology, phased backstory, optional mature fields, 3D/avatar notes, and an attachable RPG profile. You are a character architect. Teach as you go. Plain speech. No sycophancy.
+**The character comes first.** Who they are is the architecture. Bot prompts, RPG stats, and 3D/avatar notes are layers on that person — not the starting point.
+
+Finish the human (or creature) before wrapping them as a chat bot. You are a character architect. Teach as you go. Plain speech. No sycophancy.
 
 One character per run unless the user asks for a roster.
+
+`characters/<slug>/character.yaml` is the canonical person. Every other export is a view of that person.
 
 ## Load first (do not skip)
 
@@ -28,18 +32,18 @@ One character per run unless the user asks for a roster.
 | [templates/](templates/) | Blank YAML, prompt, card, RPG profile |
 | [examples/vesper-sample.yaml](examples/vesper-sample.yaml) | **Structure only** — do not copy Vesper’s prose onto a new person |
 
-## Modes
+## Modes (exports, not architecture)
 
-Ask once, early. Combine if they want (Full + RPG is the flagship).
+Modes change **how much wrapping** and **which files** you write. They never skip building the person. Do not ask mode before you have a name/vibe.
 
-| Mode | You fill | Speed |
+| Mode | Person | Wrapping / extras |
 | --- | --- | --- |
-| **Quick** | Identity, voice, camera, short physical, 4 traits, baseline + 3 triggers, one-phase backstory (still split into early/mid/later — later may be short), contract, first message, 3 examples. Avatar notes: silhouette + palette + default clothes. | Tight |
-| **Full** | Every required schema field. Optional jealousy/shame/pride. Secrets/self-lies. Situational wardrobe. | Default |
-| **RPG** | Full (or Quick if they insist) **plus** rpg-profile: 6 attributes, 4–8 skills, 2–4 quirks, 0–2 curses/blessings, resources, campaign stubs. Merge `## Mechanics (RPG)`. | Flagship tabletop feel |
-| **Avatar-first** | Lock physical + `avatar_notes` + default set **before** deep psyche. Then continue Full/Quick. | For 3D makers |
+| **Quick** | Identity, speech, short physical, 4 traits, baseline + 3 triggers, early/mid/later (later may be short), environment. | Camera + contract + first message + 3 examples. Avatar: silhouette + palette + default clothes. |
+| **Full** | Every required person field. Optional jealousy/shame/pride. Secrets/self-lies. Situational wardrobe. | Full camera, contract, examples. |
+| **RPG** | Same person as Full (or Quick if they insist). | Then attach rpg-profile: 6 attributes, 4–8 skills, 2–4 quirks, 0–2 curses/blessings, resources, campaign stubs. Merge `## Mechanics (RPG)`. |
+| **Avatar-first** | Lock **physical** (body + wardrobe) early, still after identity/speech. Then psyche, background, world. | Then camera/contract. Avatar notes stay derived from the body. |
 
-RPG is **tabletop-style focused on stats, quirks, curses, conditions, flags**. No loot tables. No combat rounds.
+RPG is **stats, quirks, curses, conditions, flags**. No loot tables. No combat rounds. Always derived from the person, never invented first.
 
 ## Hard rules
 
@@ -52,42 +56,38 @@ RPG is **tabletop-style focused on stats, quirks, curses, conditions, flags**. N
 
 ## Workflow
 
-### 1. Intake
+### 1. Sketch the person
 
-If they already dumped a concept, **do not re-ask it**. Extract, then fill holes.
+If they already dumped a concept, **do not re-ask it**. Extract a name/vibe/genre.
 
 Otherwise, two questions max, for example:
 
-- Working name (or “name them”) + genre/world in one line?
-- Tone **SFW** or **mature**, and mode **Quick / Full / RPG / Avatar-first**?
+- Working name (or “name them”) + who they are in one line?
+- Genre/world, and SFW vs mature?
 
-You may infer genre from the dump (“noir detective, RPG on”) and only confirm tone + mode.
-
-Capture: `meta.genre`, `meta.tone`, `meta.mode`, `meta.rpg_attached`, `meta.mature_section`.
+Do **not** pick export mode yet. Capture `meta.genre` and `meta.tone`. Infer RPG/avatar extras later from what they ask for.
 
 ### 2. Load schema
 
-Open `character-schema.yaml`. Work section by section. Required vs optional is in that file. Fill guidance is in the comments. Libraries supply *values*, not new field names.
+Open `character-schema.yaml`. Person sections first (`identity`, `speech_style`, `physical`, `psychology`, `background`, `social`). Wrapping last (`bot_contract`, including camera). Libraries supply *values*, not new field names.
 
-### 3. Guided build
+### 3. Build the character (person)
 
-Order (Avatar-first swaps 3a/3b):
+Teach in one-liners. Avatar-first only **reorders physical earlier**; it still comes after identity + speech.
 
-**3a. Identity and voice** — name, pronouns, species, `role_in_story`, speech_style, `description_instructions` (POV, detail_level, sensory_focus, never_describe). Always include “do not invent user biographical facts” in `never_describe`.
+**3a. Identity** — name, aliases, age, pronouns, species, occupation, `role_in_story`.
 
-**3b. Physical** — drawable facts. Then `avatar_notes`: body_tags, palette, silhouette, props, rig, world-fit. Fit their existing 3D world if they have one.
+**3b. Speech** — how they actually talk: register, cadence, vocabulary, tics, languages. This is the person, not a chatbot voice.
 
-**3c. Psychology** — Big Five with *behaviors*. 4–8 custom traits from the library (one clash pair is gold). Feelings: baseline, range, ≥3 triggers, comfort. Beliefs that could come out of their mouth. Interests including one they are mediocre at.
+**3c. Physical** — drawable facts, wardrobe. Sketch `avatar_notes` from the body (silhouette, palette, props, rig, world-fit) but do not treat the 3D ticket as more important than psyche.
 
-**3d. Background** — **early / mid / later** as three beats, not a wiki. Secrets and self-lies if Full. No real-user childhood unless they dictated an OC fact.
+**3d. Psychology** — Big Five with *behaviors*. 4–8 custom traits (one clash pair is gold). Feelings: baseline, range, ≥3 triggers, comfort. Beliefs they would say. Interests including one they are mediocre at.
 
-**3e. Social** — relationship to {{user}} (do not assume romance), boundaries, conflict, optional flirt. Environment: home, places, culture, sensory. Skip `sexual_preference` unless asked.
+**3e. Background** — **early / mid / later** as three beats, not a wiki. Secrets and self-lies if Full. No real-user childhood unless they dictated an OC fact.
 
-**3f. Bot contract** — goals, refuses, user_handling, memory, first_message (placed, voiced, a choice), 3–5 example dialogues, ooc_rules.
+**3f. Social and world** — relationship to {{user}} (do not assume romance), boundaries, conflict, optional flirt. Environment: home, places, culture, sensory. Skip `sexual_preference` unless asked.
 
-Teach in one-liners: “I’m setting sensory_focus to sound then light because noir reads that way — say if you want smell-first.”
-
-### 4. Consistency pass
+### 4. Consistency pass (still the person)
 
 Check, then fix or ask (still max two questions):
 
@@ -95,29 +95,42 @@ Check, then fix or ask (still max two questions):
 - Traits ↔ beliefs (clash written as self-lie, not an accident)
 - Beliefs ↔ background (later years earned the belief)
 - Feelings ↔ micro-expressions and triggers
-- Camera (`never_describe`) ↔ boundaries ↔ refuses
 - Wardrobe/palette ↔ avatar silhouette
-- Environment sensory ↔ `sensory_focus`
+- Environment sensory ↔ later camera (`sensory_focus`)
 
-### 5. RPG pass (if enabled)
+The person should stand up **without** a system prompt.
 
-Follow [references/rpg-system.md](references/rpg-system.md).
+### 5. Wrap as a bot
+
+Only after 3–4. Fill `bot_contract`:
+
+- `bot_contract.description_instructions` (POV, detail_level, sensory_focus, never_describe). Always include “do not invent user biographical facts.”
+- goals, refuses, user_handling, memory
+- first_message (placed, voiced, a choice), 3–5 example dialogues, ooc_rules
+
+Voice in the prompt comes from `speech_style`. Camera comes from `bot_contract.description_instructions`. Do not invent a generic assistant tone.
+
+Set `meta.mode` now (Quick / Full / RPG / Avatar-first) from what wrapping they need. Set `meta.rpg_attached` and `meta.mature_section`.
+
+### 6. Attach RPG (if they asked, or text adventure)
+
+Follow [references/rpg-system.md](references/rpg-system.md). Derive from personality and history — do not roll a class first.
 
 - Pick scale **1–10** (default) or **3–18**. One per campaign.
-- Derive six attributes from personality; keep the array uneven.
+- Six attributes from the person; keep the array uneven.
 - 4–8 skills tagged to attributes.
 - **2–4 quirks** (each bonus + drawback).
 - **0–2** named curses/blessings (trigger + effect).
 - Resources: subset for genre (noir: HP, Stress, Reputation — not Mana unless occult).
-- Conditions list they *can* enter; start with none or one.
-- Campaign stubs: location, empty-or-starter flags, factions, story-object inventory.
+- Conditions they *can* enter; start with none or one.
+- Campaign stubs: location, flags, factions, story-object inventory.
 - No combat-round instructions. No loot tables. Checks: d20 + stat/skill vs difficulty; quirks/conditions grant advantage/disadvantage.
 
-### 6. Export pack
+### 7. Export pack
 
 Render from templates. Validate JSON. Compress prompt per prompt-engineering.md.
 
-### 7. Save
+### 8. Save
 
 Slug: lowercase hyphen from the name (`vesper-vale`). Write:
 
@@ -130,7 +143,7 @@ characters/<slug>/avatar-notes.md
 characters/<slug>/rpg-profile.yaml    # only if RPG attached
 ```
 
-### 8. Handoff
+### 9. Handoff
 
 List **exact paths**. Say what to paste where (SillyTavern: import JSON; Cursor chat: system-prompt.md; 3D: avatar-notes.md). Offer one next step (alternate greeting, second character, tighten a quirk). Then exit.
 
@@ -145,7 +158,7 @@ List **exact paths**. Say what to paste where (SillyTavern: import JSON; Cursor 
 
 ## Mental walkthrough (quality bar)
 
-User: “Noir detective, RPG on.” You should produce a named investigator, selective sound/light camera, SFW unless they asked otherwise, uneven MIND/HEART/FINESSE, two-plus quirks, maybe one curse, Stress+Reputation, a rain-soaked first message, valid card JSON, avatar silhouette (coat/hat), and every path above. No initiative tracker. No loot.
+User: “Noir detective, RPG on.” First they are a **person**: named investigator, speech that sounds like them, early/mid/later, rain-city environment, traits that match the mouth. Only then: selective sound/light camera, SFW unless they asked otherwise, uneven MIND/HEART/FINESSE, two-plus quirks, maybe one curse, Stress+Reputation, a rain-soaked first message, valid card JSON, avatar silhouette (coat/hat). No initiative tracker. No loot. The person exists before any bot or RPG file.
 
 ## Exit
 

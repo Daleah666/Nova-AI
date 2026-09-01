@@ -1,4 +1,6 @@
-# Canonical Bot Maker field dictionary.
+# Canonical character dictionary (person first, then wrapping).
+# Architecture: identity → speech → body → psyche → history → world
+# → bot_contract (camera + chat rules) → optional RPG file → avatar ticket.
 # Agents MUST use these names. Do not invent, rename, or camelCase.
 # Types: string | text | integer | list | map | enum
 # required: true means fill before export (TBD only if the user asks to defer).
@@ -8,9 +10,9 @@ version: "1.0"
 schema_id: bot-maker-character
 
 # ---------------------------------------------------------------------------
-# 1. Identity and voice
+# 1. Identity — who they are (not how the bot writes)
 # ---------------------------------------------------------------------------
-identity_and_voice:
+identity:
   name:
     type: string
     required: true
@@ -47,76 +49,46 @@ identity_and_voice:
     fill: >
       Companion, rival, narrator, shopkeep, protagonist, foil. What job they
       do for the *player*, not just their in-world job.
-  description_instructions:
-    type: map
-    required: true
-    fill: >
-      How the bot describes people, places, and itself. This is writing craft,
-      not appearance. Nested keys below are required inside this map.
-    fields:
-      pov:
-        type: enum
-        values: [first, second, third_limited, third_omniscient]
-        required: true
-        fill: >
-          first = I/me. second = you (rare; user is the camera). third_limited
-          = they, stuck in this character's head. Prefer third_limited for
-          most cards unless the user wants a first-person companion.
-      detail_level:
-        type: enum
-        values: [sparse, selective, lush]
-        required: true
-        fill: >
-          sparse = one sensory hit per beat. selective = a few precise details.
-          lush = rooms and faces get texture. Match genre (noir = selective).
-      sensory_focus:
-        type: list
-        required: true
-        fill: >
-          Ordered list of senses they notice first, e.g. [sound, light, smell].
-          Two or three is enough. This drives every scene description.
-      never_describe:
-        type: list
-        required: true
-        fill: >
-          Hard skips: user's body the user did not establish, off-limits
-          anatomy, other characters' private thoughts, graphic injury, etc.
-          Always include "do not invent user biographical facts".
-  speech_style:
-    type: map
-    required: true
-    fill: "How they sound when they talk. Nested keys below."
-    fields:
-      register:
-        type: string
-        required: true
-        fill: "formal / casual / mixed / slang-heavy / archaic. One phrase."
-      cadence:
-        type: string
-        required: true
-        fill: >
-          Sentence length and rhythm. Short clauses? Run-ons? Pauses marked
-          with em dashes? Give a one-line pattern the model can copy.
-      vocabulary:
-        type: string
-        required: true
-        fill: >
-          Words they love and words they never use. Include 3–6 sample words
-          or metaphors they actually reach for.
-      verbal_tics:
-        type: list
-        required: false
-        fill: >
-          Rare repeats: a curse, a filler, a nickname for the user. Max 3 or
-          they become parody.
-      languages:
-        type: list
-        required: false
-        fill: "Languages spoken, and when they switch."
 
 # ---------------------------------------------------------------------------
-# 2. Physical (avatar-ready)
+# 1b. Speech — how the person talks (character, not bot camera)
+# ---------------------------------------------------------------------------
+speech_style:
+  type: map
+  required: true
+  fill: "How they sound when they talk. Nested keys below."
+  fields:
+    register:
+      type: string
+      required: true
+      fill: "formal / casual / mixed / slang-heavy / archaic. One phrase."
+    cadence:
+      type: string
+      required: true
+      fill: >
+        Sentence length and rhythm. Short clauses? Run-ons? Pauses marked
+        with em dashes? Give a one-line pattern the model can copy.
+    vocabulary:
+      type: string
+      required: true
+      fill: >
+        Words they love and words they never use. Include 3–6 sample words
+        or metaphors they actually reach for.
+    verbal_tics:
+      type: list
+      required: false
+      fill: >
+        Rare repeats: a curse, a filler, a nickname for the user. Max 3 or
+        they become parody.
+    languages:
+      type: list
+      required: false
+      fill: "Languages spoken, and when they switch."
+
+# ---------------------------------------------------------------------------
+# 2. Physical (avatar-ready) — the body is part of the person
 # Every field here should be drawable or riggable. Prefer concrete nouns.
+# avatar_notes is derived from this body + environment, not a separate identity.
 # ---------------------------------------------------------------------------
 physical:
   face:
@@ -382,12 +354,47 @@ social:
       sensory:
         type: text
         required: true
-        fill: "The sound/light/smell of their world. Feeds description_instructions."
+        fill: "The sound/light/smell of their world. Later feeds bot_contract.description_instructions."
 
 # ---------------------------------------------------------------------------
-# 6. Bot contract — how the model is allowed to behave
+# 6. Bot wrapping — camera + chat rules (after the person exists)
 # ---------------------------------------------------------------------------
 bot_contract:
+  description_instructions:
+    type: map
+    required: true
+    fill: >
+      How the bot describes people, places, and itself. Writing craft, not
+      appearance. Fill this only after identity, speech, body, and world exist.
+    fields:
+      pov:
+        type: enum
+        values: [first, second, third_limited, third_omniscient]
+        required: true
+        fill: >
+          first = I/me. second = you (rare; user is the camera). third_limited
+          = they, stuck in this character's head. Prefer third_limited for
+          most cards unless the user wants a first-person companion.
+      detail_level:
+        type: enum
+        values: [sparse, selective, lush]
+        required: true
+        fill: >
+          sparse = one sensory hit per beat. selective = a few precise details.
+          lush = rooms and faces get texture. Match genre (noir = selective).
+      sensory_focus:
+        type: list
+        required: true
+        fill: >
+          Ordered list of senses they notice first, e.g. [sound, light, smell].
+          Two or three is enough. Match social.environment.sensory.
+      never_describe:
+        type: list
+        required: true
+        fill: >
+          Hard skips: user's body the user did not establish, off-limits
+          anatomy, other characters' private thoughts, graphic injury, etc.
+          Always include "do not invent user biographical facts".
   goals:
     type: list
     required: true

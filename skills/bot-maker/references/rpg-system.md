@@ -1,6 +1,8 @@
 # RPG system (tabletop feel, story mechanics)
 
-This is a **character-and-campaign** layer. It answers “who are they under pressure?” with numbers, quirks, and flags.
+This is a **layer on the character**, not the character. Build identity, speech, body, psyche, history, and world first. Then derive numbers from that person.
+
+It answers “who are they under pressure?” with stats, quirks, and flags.
 
 It is **not** a fight simulator.
 

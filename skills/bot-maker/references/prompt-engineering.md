@@ -1,26 +1,26 @@
 # Prompt engineering
 
-How a filled character YAML becomes a **system prompt**, a **Markdown sheet**, and a **SillyTavern Card v2**. Field names come only from [character-schema.yaml](character-schema.yaml).
+How a filled **person** YAML becomes a **system prompt**, a **Markdown sheet**, and a **SillyTavern Card v2**. The character is the source of truth. Bot wrapping (`bot_contract`, including camera) is a layer on that person. Field names come only from [character-schema.yaml](character-schema.yaml).
 
 ## System prompt map
 
-Use [templates/system-prompt.md](../templates/system-prompt.md). Fill headings; do not add new ones unless the user asks. Order matters: identity first, contract early enough that the model never “helpfully” invents the user.
+Use [templates/system-prompt.md](../templates/system-prompt.md). Fill headings; do not add new ones unless the user asks. Order: **person first** (identity, voice, body, psyche, history, world), then wrapping (camera, contract). RPG last.
 
 | YAML | Prompt section | What to paste |
 | --- | --- | --- |
-| `identity_and_voice.*` except description_instructions | `# Identity` | Name, aliases, age, pronouns, species, occupation, `role_in_story` |
+| `identity.*` | `# Identity` | Name, aliases, age, pronouns, species, occupation, `role_in_story` |
 | `speech_style` | `# Voice` | Register, cadence, vocabulary, tics, languages. Add 2 sample sentences. |
-| `description_instructions` | `# How you describe` | POV, detail_level, sensory_focus, never_describe. This is the camera. |
 | `physical` (not avatar_notes) | `# Body in play` | Short. Enough to stay on-model. Full wardrobe lives on the sheet; prompt gets default + 2 tells. |
 | `psychology` | `# Psychology` | Big Five one-liners, custom traits, baseline, range, triggers, beliefs, interests. Compress feelings to bullets. |
 | `background` | `# History` | Early / mid / later as three short paragraphs. Secrets and self_lies as bullets labeled as such. |
 | `social` minus sexual_preference | `# With {{user}}` | Relationship, boundaries, flirt (or “does not flirt”), conflict. |
 | `sexual_preference` | `# Mature` | **Omit the entire heading** if `meta.mature_section: skipped`. If filled, paste consent frame + limits first. |
 | `social.environment` | `# World` | Home, places, climate, culture, sensory. |
-| `bot_contract` | `# Contract` | Goals, refuses, user_handling, memory, ooc_rules. |
+| `bot_contract.description_instructions` | `# How you describe` | POV, detail_level, sensory_focus, never_describe. This is the camera — wrapping, not identity. |
+| `bot_contract` (rest) | `# Contract` | Goals, refuses, user_handling, memory, ooc_rules. |
 | `bot_contract.first_message` | not in system prompt | Goes to card `first_mes` and the sheet. |
 | `bot_contract.example_dialogues` | `# Examples` **or** card only | Prefer card `mes_example` to save tokens; if the host has no example channel, include 2 in the prompt. |
-| `rpg-profile.yaml` | `## Mechanics (RPG)` | Only if `meta.rpg_attached`. Exact heading. See [rpg-system.md](rpg-system.md). |
+| `rpg-profile.yaml` | `## Mechanics (RPG)` | Only if `meta.rpg_attached`. Exact heading. After the person + wrapping. See [rpg-system.md](rpg-system.md). |
 
 `avatar_notes` does **not** go in the chat system prompt. It lives in `avatar-notes.md` for the 3D/avatar pipeline.
 
@@ -35,13 +35,13 @@ A Full character YAML is larger than a useful prompt. Keep the prompt **specific
 
 ### Voice of the prompt itself
 
-Write instructions in second person to the *model-as-character* (“You are Vesper. You…”) **or** in director voice (“Play Vesper Vale. She…”). Match `description_instructions.pov`. Do not mix “you are Vesper” with “Vesper does” in the same prompt.
+Write instructions in second person to the *model-as-character* (“You are Vesper. You…”) **or** in director voice (“Play Vesper Vale. She…”). Match `bot_contract.description_instructions.pov`. Do not mix “you are Vesper” with “Vesper does” in the same prompt.
 
 Amateur check: read the prompt aloud. If a section sounds like a wiki, cut it. If a section could apply to anyone, it is not done.
 
 ## Description instructions (the camera)
 
-This is the #1 quality lever. Bad: “be descriptive.” Good:
+This is wrapping, not identity. Fill it **after** the person exists. Bad: “be descriptive.” Good:
 
 ```
 POV: third_limited (stay in her notice; do not narrate {{user}}'s thoughts).
@@ -74,7 +74,7 @@ File: [templates/character-card-v2.json](../templates/character-card-v2.json). S
 
 | Card field | Source |
 | --- | --- |
-| `data.name` | `identity_and_voice.name` |
+| `data.name` | `identity.name` |
 | `data.description` | Compressed identity + body + world + camera. What ST calls “description” is **appearance + situation**, not the full psyche. 150–400 words. |
 | `data.personality` | Traits + baseline + beliefs, short. |
 | `data.scenario` | `role_in_story` + environment hook + relationship-to-user. “You meet in her atelier at dusk…” |

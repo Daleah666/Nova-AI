@@ -1,5 +1,6 @@
 # Bot Maker blank scaffold. Copy to characters/<slug>/character.yaml and fill.
-# Field names match references/character-schema.yaml — do not add keys.
+# Person first (identity → speech → body → psyche → history → world),
+# then bot wrapping. Field names match references/character-schema.yaml.
 
 meta:
   slug: "" # lowercase-hyphen
@@ -12,7 +13,7 @@ meta:
   mature_section: skipped # skipped | filled
   tags: []
 
-identity_and_voice:
+identity:
   name: ""
   aliases: []
   age: ""
@@ -20,20 +21,13 @@ identity_and_voice:
   species: ""
   occupation: ""
   role_in_story: ""
-  description_instructions:
-    pov: third_limited # first | second | third_limited | third_omniscient
-    detail_level: selective # sparse | selective | lush
-    sensory_focus:
-      - sound
-      - light
-    never_describe:
-      - do not invent user biographical facts
-  speech_style:
-    register: ""
-    cadence: ""
-    vocabulary: ""
-    verbal_tics: []
-    languages: []
+
+speech_style:
+  register: ""
+  cadence: ""
+  vocabulary: ""
+  verbal_tics: []
+  languages: []
 
 physical:
   face: ""
@@ -136,6 +130,14 @@ social:
     sensory: ""
 
 bot_contract:
+  description_instructions:
+    pov: third_limited # first | second | third_limited | third_omniscient
+    detail_level: selective # sparse | selective | lush
+    sensory_focus:
+      - sound
+      - light
+    never_describe:
+      - do not invent user biographical facts
   goals: []
   refuses:
     - inventing user biographical facts
