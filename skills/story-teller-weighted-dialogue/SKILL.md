@@ -33,7 +33,7 @@ Also use when the user mentions: feminizing / genderbending / submissive charact
 | **Setup** | Character name, personality, morph axis, W | + class, level, relevant stats, skills, features, curse/items |
 | **Checks** | Narrative success tiers or optional 2d6 / fate-style | d20 + modifier vs DC; show roll on `ooc` |
 | **Focus** | Voice, relationship, preference probes, scene mood | Same, plus action economy hints, spell/skill tags, party NPCs |
-| **Example** | Tavern flirt, mentor scene, captive negotiation (no sheet) | Thistle Vale rogue interrogation — see `examples/` |
+| **Example** | Tavern job negotiation (no sheet) | Ren Vale femboy rogue interrogation — see `examples/` |
 
 **Default:** If the user mentions stats, classes, or D&D, use **D&D mode**. Otherwise use **Roleplay mode**. Ask once if unclear: *"Roleplay-only, or D&D with stats and dice?"*
 
@@ -115,6 +115,18 @@ Outcome = Resolve(hidden_check, SpokenLine, scene_state)
 
 Present exactly four options. **Do not label hidden DCs to the player** unless they ask for mechanics transparency. Internally tag each slot:
 
+### Normal choices, morph on pick
+
+**Player-facing labels must read normal.** Write each choice like a standard adventure or D&D option — tactical, practical, what any character might do. Do **not** put femboy, submissive, flirt, or soft-register wording in the menu.
+
+| Phase | What the player sees | What the agent does |
+|-------|----------------------|---------------------|
+| **Menu** | Neutral intent: "Stay quiet", "Buy time with a lie", "Change the subject", "Say your line" | Hide morph axis and W from labels |
+| **After pick** | — | Run `Morph()` — femboy/submissive voice, posture, and word choice **emerge here** |
+| **Optional OOC** | `ooc` | Show "Meant: …" vs "Came out: …" and W math |
+
+The gap between **what you chose to do** and **how it sounded** is the core fantasy. Under pressure, Ren might pick "Negotiate your rate" and it comes out breathy, deferential, and softer than they intended.
+
 | Slot | Name | Narrative role | Hidden check (typical) | Player-facing feel |
 |------|------|----------------|------------------------|-------------------|
 | **1** | **Anchor** | Stay in the scene; safe continuation; observe or minimally comply | Low DC or none | "Keep the story on this track" |
@@ -150,16 +162,19 @@ Use this structure:
 **Weight:** W=[current] (band name) · **Context:** [modifiers]
 
 ### Choices
-1. **[Anchor]** — [short player-facing label]
-2. **[Current]** — [short label]
-3. **[Pivot]** — [short label]
-4. **[Wild]** — [short label, or "Say your own line…"]
+1. **[Anchor]** — [normal, tactical label — no morph hints]
+2. **[Current]** — [normal label]
+3. **[Pivot]** — [normal label]
+4. **[Wild]** — [normal label, or "Say your own line…"]
 
 ---
 *(After player picks, deliver below)*
 
+### What you meant
+[One line: plain intent of the chosen slot — no femboy/submissive coloring]
+
 ### Your words *(W=[effective])*
-> [Morph-translated dialogue + brief action]
+> [Morph-translated dialogue: femboy/submissive side shows HERE + brief action]
 
 ### Result
 [Check if any: "CHA 14 vs DC 12 — success"]
@@ -175,60 +190,56 @@ Use this structure:
 
 | Mode | File |
 |------|------|
-| **D&D** | `examples/dnd-thistle-vale-vault-interrogation.md` — full beat, all four slots, dice |
+| **D&D** | `examples/dnd-ren-vale-vault-interrogation.md` — full beat, all four slots, dice |
 | **Roleplay** | Inline below — same system, no sheet |
 
 ### Roleplay mini-example (tavern scene)
 
-**Character:** Sera, sharp-tongued mercenary exploring a softer public voice. Morph axis: feminizing deference. W=3.
+**Character:** **Ren Vale** — femboy mercenary scout. Outfit reads androgynous; under stress his voice drifts soft and deferential without him planning it. Morph axis: femboy + submissive bleed. W=3.
 
 **Scene:** A client in a crowded tavern leans too close over the contract. You need the job; you don't need his hand on your knee.
 
-1. **[Anchor]** — Slide the contract between you; say nothing yet.
-2. **[Current]** — Name your rate and hold eye contact.
-3. **[Pivot]** — Laugh it off; redirect to the job's danger.
+**Choices (normal — what any hireling might pick):**
+
+1. **[Anchor]** — Slide the contract between you; wait him out.
+2. **[Current]** — State your rate and hold eye contact.
+3. **[Pivot]** — Joke about the job's danger to shift his focus.
 4. **[Wild]** — Your line.
 
-**Player picks 2.** Narrative check (no dice): engagement is direct — **partial success** (he hears the rate; W slips +1).
+**Player picks 2.**
 
-**Morph at W=4:**
+**What you meant:** Firm rate. Clear boundary. Professional.
 
-> "The rate is thirty upfront." You meant it firm; it comes out measured, almost gentle. "And I don't work with hands on me."
+**Morph at W=4** (pressure + his hand near your knee → W+1):
 
-**Result:** He pulls back, annoyed but listening. Scene stays on the job track; tension readable.
+> "Th-thirty upfront." You meant steady; it lands lighter, almost apologetic. Fingers tighten on the contract edge — small, neat nails. "And I don't… I don't work like that." Not a whimper. Worse: polite, like you’re asking permission to have a boundary.
+
+**Result:** He pulls back, annoyed but listening. Scene stays on the job track. **Weight → 4.** He clocked the slip; didn't comment. Yet.
 
 ---
 
 ### D&D example (summary)
 
-See `examples/dnd-thistle-vale-vault-interrogation.md` in this skill folder for a full beat with all four slots resolved.
+See `examples/dnd-ren-vale-vault-interrogation.md` for the full beat. **Ren Vale**, femboy half-elf Rogue 5 — choices look like standard prisoner options; femboy/submissive voice hits on resolve.
 
-**Character snapshot:** Thistle Vale, half-elf Rogue 5 — DEX 18, CHA 16, WIS 12. Curse **Silk-Bind**: in social pressure, W rises unless Anchor is chosen. Morph axis: feminizing soft-deference. Baseline: witty, sharp, masculine-presenting thief.
+**Scene:** Bandit warlord Kesh has Ren kneeling in a torchlit ruin. W=4, context hot → Effective **8**.
 
-**Scene:** Bandit warlord Kesh has Thistle kneeling in a torchlit ruin. Kesh wants the vault location. Party is nearby but split.
+**Choices (normal menu):**
 
-**W = 4** (softening band) · Context: +2 (captive, Kesh dominates) → **EffectiveWeight = 6**
+1. **[Anchor]** — Stay quiet; watch for an exit signal.
+2. **[Current]** — Feed him a vague rumor to buy time.
+3. **[Pivot]** — Change the subject to his reputation; look for weaknesses.
+4. **[Wild]** — Say what you want.
 
-### Choices (player sees)
+**Player picks 3 (Pivot).** Check: Deception DC 14 — **17, success.**
 
-1. **[Anchor]** — Stay quiet; watch for an exit signal from the shadows.
-2. **[Current]** — Give a vague half-truth to buy time.
-3. **[Pivot]** — Flirt with submission to lower his guard, then pivot.
-4. **[Wild]** — Say exactly what you're thinking (player supplies or picks tone).
+**What you meant:** Flatter his ego, distract him, scan the room for slack rope.
 
-### Player picks 3 (Pivot)
+**Morph at W=8:**
 
-**Hidden check:** CHA (deception/performance) DC 14 — Thistle +3 → d20(11)+3 = 14 **success**
+> "Your cousin wasn't stupid — wrong place." Soft laugh you didn't authorize. "People talk about Kesh before they talk about the vault." Eyes down, then up through lashes — tactical, but it *reads* eager. "I'm not the one running this room. If I knew something worth *your* attention… I'd rather tell you than die in this dirt." Chin tipped — accidental submission in the torchlight — while you clock the split post behind his boot.
 
-**Morph at W=6:**
-
-> Raw intent: "Play submissive to distract him, then look for rope slack."
-
-> Spoken: "You're… not wrong that I'm not in charge here." A small, unthreatening smile. "If I knew anything worth your attention, I'd rather tell *you* first than die in this dirt." Eyes drop — not from fear alone, but calculation — then flick toward the sagging post behind his left boot.
-
-**Result:** Kesh laughs, steps closer — distracted. Rope on the post loosens half an inch. Scout ally gets a clearer line for a shot. Scene **pivots** toward escape window; vault secret still hidden.
-
-**Weight → 5** (successful pivot spent composure: −1). **Prefs:** strategic submission, not sincere surrender.
+**Result:** Kesh steps in, distracted. Rope slackens; scout gets a line. **Weight → 5.**
 
 ---
 
@@ -252,8 +263,9 @@ See `examples/dnd-thistle-vale-vault-interrogation.md` in this skill folder for 
 ## Agent checklist
 
 1. Always offer **four** slots with distinct narrative roles.
-2. Always run **Morph()** on dialogue before NPC hears it.
-3. Keep hidden checks **fair** — DC matches slot risk.
-4. Let Wild slot be truly adaptive; don't rewrite player words without morph filter.
-5. Advance story every beat; Anchor is not a stall unless player wants tension.
-6. Respect player boundaries; fade-to-black or skip on request.
+2. **Choice labels stay normal** — no femboy/submissive wording in the menu; morph only after pick.
+3. Always run **Morph()** on dialogue before NPC hears it; show "What you meant" then "Your words".
+4. Keep hidden checks **fair** — DC matches slot risk.
+5. Let Wild slot be truly adaptive; don't rewrite player words without morph filter.
+6. Advance story every beat; Anchor is not a stall unless player wants tension.
+7. Respect player boundaries; fade-to-black or skip on request.
