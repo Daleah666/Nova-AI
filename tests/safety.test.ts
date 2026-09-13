@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { evaluateCharacterSafety, evaluateTextPolicy } from "@/lib/safety";
-import { SEED_CHARACTER } from "@/lib/seed";
+import { SEED_CHARACTER, SEED_CHARACTERS } from "@/lib/seed";
 
 describe("adult character policy", () => {
-  it("allows the seeded adult companion", () => {
-    expect(evaluateCharacterSafety(SEED_CHARACTER).ok).toBe(true);
+  it("allows every seeded adult companion", () => {
+    for (const character of SEED_CHARACTERS) {
+      const result = evaluateCharacterSafety(character);
+      expect(result, character.name).toEqual({ ok: true });
+    }
   });
 
   it("rejects ages under 18", () => {

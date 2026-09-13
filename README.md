@@ -17,7 +17,9 @@ npm run dev
 
 4. In your browser open [http://localhost:3000](http://localhost:3000).
 5. Click **Settings**. Paste your API key, check the base URL and model, save.
-6. Open the seeded companion **Mira Vale** and click **Chat**, or **Create character**.
+6. Open a seeded companion and click **Chat**, or **Create character**.
+
+Seeded on first launch (and on the Velvet Lantern seed bump): cozy **Mira Vale**, plus the adult **Honey-Lantern** party — **Liora Sweetbough** (face), **Rheda Ironpetal** (muscle), **Sylvene Nightpurse** (sneak), **Maewyn Glowmere** (caster). Search `velvet-lantern` or `elf`. All four are 18+ originals; none are copied from Chub.
 
 Stop the server with `Ctrl+C`.
 

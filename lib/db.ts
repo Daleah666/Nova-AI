@@ -1,4 +1,4 @@
-import { SEED_CHARACTER, SEED_CHARACTER_ID } from "./seed";
+import { SEED_CHARACTERS, SEED_VERSION } from "./seed";
 import type { Character, ChatMessage, ChatThread } from "./types";
 
 const DB_NAME = "character-companion";
@@ -48,26 +48,30 @@ async function ensureSeed() {
     const seeded = await requestToPromise<string | undefined>(
       db.transaction(META_STORE, "readonly").objectStore(META_STORE).get("seeded"),
     );
-    if (seeded) return;
+    if (seeded === SEED_VERSION) return;
 
-    const existing = await requestToPromise<Character | undefined>(
-      db
-        .transaction(CHAR_STORE, "readonly")
-        .objectStore(CHAR_STORE)
-        .get(SEED_CHARACTER_ID),
-    );
-
-    const tx = db.transaction([CHAR_STORE, META_STORE], "readwrite");
-    if (!existing) {
-      const now = Date.now();
+    const now = Date.now();
+    for (let i = 0; i < SEED_CHARACTERS.length; i += 1) {
+      const character = SEED_CHARACTERS[i];
+      const existing = await requestToPromise<Character | undefined>(
+        db
+          .transaction(CHAR_STORE, "readonly")
+          .objectStore(CHAR_STORE)
+          .get(character.id),
+      );
+      if (existing) continue;
+      const tx = db.transaction(CHAR_STORE, "readwrite");
       tx.objectStore(CHAR_STORE).put({
-        ...SEED_CHARACTER,
+        ...character,
         createdAt: now,
-        updatedAt: now,
+        updatedAt: now + (SEED_CHARACTERS.length - i),
       });
+      await txDone(tx);
     }
-    tx.objectStore(META_STORE).put("1", "seeded");
-    await txDone(tx);
+
+    const metaTx = db.transaction(META_STORE, "readwrite");
+    metaTx.objectStore(META_STORE).put(SEED_VERSION, "seeded");
+    await txDone(metaTx);
   } finally {
     db.close();
   }
