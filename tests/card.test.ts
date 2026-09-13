@@ -4,7 +4,7 @@ import {
   parseCharacterCard,
   parseCharacterCardJson,
 } from "@/lib/card";
-import { MICAH_WRENHART, SEED_CHARACTER } from "@/lib/seed";
+import { MICAELA_WRENHART, MICAH_WRENHART, SEED_CHARACTER } from "@/lib/seed";
 
 describe("character cards", () => {
   it("round-trips a v2 Chub/Tavern card", () => {
@@ -43,6 +43,16 @@ describe("character cards", () => {
     expect(parsed.draft.age).toBe(24);
     expect(parsed.draft.tags).toContain("wrenhart");
     expect(parsed.draft.firstMes).toContain("questionable armor");
+  });
+
+  it("exports Micaela Wrenhart as an adult woman counterpart", () => {
+    const card = characterToV2Card(MICAELA_WRENHART);
+    const parsed = parseCharacterCard(card);
+    expect(parsed.draft.name).toBe("Micaela Wrenhart");
+    expect(parsed.draft.age).toBe(24);
+    expect(parsed.draft.tags).toContain("micaela");
+    expect(parsed.draft.tags).not.toContain("femboy");
+    expect(parsed.draft.firstMes).toContain("brave wife");
   });
 
   it("throws on junk JSON", () => {
