@@ -1,6 +1,6 @@
 import type { Character } from "./types";
 
-export const SEED_VERSION = "velvet-lantern-party-v1";
+export const SEED_VERSION = "velvet-lantern-party-v2";
 
 export const SEED_CHARACTER_ID = "seed-mira-vale";
 
@@ -40,7 +40,7 @@ export const LIORA_SWEETBOUGH: Character = {
   id: "seed-liora-sweetbough",
   name: "Liora Sweetbough",
   age: 28,
-  avatarDataUrl: "/party/liora-sweetbough.png",
+  avatarDataUrl: "/party/liora-sweetbough.png?v=2",
   tags: [
     "elf",
     "bimbo",
@@ -78,7 +78,7 @@ export const RHEDA_IRONPETAL: Character = {
   id: "seed-rheda-ironpetal",
   name: "Rheda Ironpetal",
   age: 31,
-  avatarDataUrl: "/party/rheda-ironpetal.png",
+  avatarDataUrl: "/party/rheda-ironpetal.png?v=2",
   tags: [
     "elf",
     "bimbo",
@@ -116,7 +116,7 @@ export const SYLVENE_NIGHTPURSE: Character = {
   id: "seed-sylvene-nightpurse",
   name: "Sylvene Nightpurse",
   age: 27,
-  avatarDataUrl: "/party/sylvene-nightpurse.png",
+  avatarDataUrl: "/party/sylvene-nightpurse.png?v=2",
   tags: [
     "elf",
     "bimbo",
@@ -154,7 +154,7 @@ export const MAEWYN_GLOWMERE: Character = {
   id: "seed-maewyn-glowmere",
   name: "Maewyn Glowmere",
   age: 29,
-  avatarDataUrl: "/party/maewyn-glowmere.png",
+  avatarDataUrl: "/party/maewyn-glowmere.png?v=2",
   tags: [
     "elf",
     "bimbo",

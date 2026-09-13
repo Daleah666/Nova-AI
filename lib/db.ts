@@ -59,7 +59,22 @@ async function ensureSeed() {
           .objectStore(CHAR_STORE)
           .get(character.id),
       );
-      if (existing) continue;
+      if (existing) {
+        const nextAvatar = character.avatarDataUrl;
+        const prevAvatar = existing.avatarDataUrl;
+        if (
+          nextAvatar &&
+          (prevAvatar === null || prevAvatar.startsWith("/party/"))
+        ) {
+          const patch = db.transaction(CHAR_STORE, "readwrite");
+          patch.objectStore(CHAR_STORE).put({
+            ...existing,
+            avatarDataUrl: nextAvatar,
+          });
+          await txDone(patch);
+        }
+        continue;
+      }
       const tx = db.transaction(CHAR_STORE, "readwrite");
       tx.objectStore(CHAR_STORE).put({
         ...character,
