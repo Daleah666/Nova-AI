@@ -1,6 +1,7 @@
 const SCRIPT_KEY = "asd.script.v1";
 const SETTINGS_KEY = "asd.settings.v1";
 const FOLDER_KEY = "asd.driveFolder.v1";
+const TEMPLATE_KEY = "asd.template.v1";
 
 export function loadScriptText(): string | null {
   try {
@@ -24,6 +25,18 @@ export function loadFolderId(): string {
 
 export function saveFolderId(id: string): void {
   localStorage.setItem(FOLDER_KEY, id);
+}
+
+export function loadTemplateId(): string | null {
+  try {
+    return localStorage.getItem(TEMPLATE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveTemplateId(id: string): void {
+  localStorage.setItem(TEMPLATE_KEY, id);
 }
 
 export function loadSettingsJson(): string | null {

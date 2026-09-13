@@ -9,3 +9,7 @@ dist-ssr
 coverage
 *.tsbuildinfo
 node_modules/.tmp
+/safety-warning.png
+/studio-main.png
+/session-running.png
+.playwright-mcp

@@ -25,9 +25,11 @@ import {
   loadFolderId,
   loadScriptText,
   loadSettingsJson,
+  loadTemplateId,
   saveFolderId,
   saveScriptText,
   saveSettingsJson,
+  saveTemplateId,
 } from "./lib/storage";
 import { decodeWav, fetchCartesiaWav } from "./lib/tts";
 import type { AudioMode, ScriptTemplateId, ServerConfig, SessionSettings, VisualItem, VoiceEngine } from "./types";
@@ -56,7 +58,10 @@ function loadSettings(): SessionSettings {
 export function App() {
   const [safe, setSafe] = useState(hasAcceptedSafety);
   const [config, setConfig] = useState<ServerConfig | null>(null);
-  const [templateId, setTemplateId] = useState<ScriptTemplateId>(DEFAULT_TEMPLATE_ID);
+  const [templateId, setTemplateId] = useState<ScriptTemplateId>(() => {
+    const saved = loadTemplateId();
+    return SCRIPT_TEMPLATES.some((t) => t.id === saved) ? (saved as ScriptTemplateId) : DEFAULT_TEMPLATE_ID;
+  });
   const [scriptText, setScriptText] = useState(
     () => loadScriptText() ?? scriptToText(templateById(DEFAULT_TEMPLATE_ID).lines),
   );
@@ -88,6 +93,10 @@ export function App() {
   useEffect(() => {
     saveScriptText(scriptText);
   }, [scriptText]);
+
+  useEffect(() => {
+    saveTemplateId(templateId);
+  }, [templateId]);
 
   useEffect(() => {
     saveSettingsJson(JSON.stringify(settings));
@@ -314,6 +323,9 @@ export function App() {
       <div className="grain" />
       {running ? (
         <div className="live-shell" role="dialog" aria-label="Active session">
+          <button className="live-stop" type="button" onClick={stopSession}>
+            STOP
+          </button>
           <FlashStage currentSrc={current?.src ?? ""} fill />
         </div>
       ) : null}
@@ -364,20 +376,18 @@ export function App() {
               ))}
             </div>
             <div className="row" style={{ marginTop: 12 }}>
-              <label className="btn ghost">
+              <label className="btn ghost file-btn">
                 Upload images
                 <input
-                  className="sr-only"
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => void addLocalFiles(e.target.files)}
                 />
               </label>
-              <label className="btn ghost">
+              <label className="btn ghost file-btn">
                 Local folder
                 <input
-                  className="sr-only"
                   type="file"
                   accept="image/*"
                   multiple
@@ -449,10 +459,9 @@ export function App() {
               <button className="btn ghost" onClick={exportScript}>
                 Download .txt
               </button>
-              <label className="btn ghost">
+              <label className="btn ghost file-btn">
                 Import .txt
                 <input
-                  className="sr-only"
                   type="file"
                   accept=".txt,text/plain"
                   onChange={async (e) => {
