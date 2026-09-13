@@ -4,7 +4,7 @@ import {
   parseCharacterCard,
   parseCharacterCardJson,
 } from "@/lib/card";
-import { SEED_CHARACTER } from "@/lib/seed";
+import { MICAH_WRENHART, SEED_CHARACTER } from "@/lib/seed";
 
 describe("character cards", () => {
   it("round-trips a v2 Chub/Tavern card", () => {
@@ -34,6 +34,15 @@ describe("character cards", () => {
     expect(parsed.draft.name).toBe("Rowan Hale");
     expect(parsed.draft.age).toBe(29);
     expect(parsed.draft.personality).toContain("Steady");
+  });
+
+  it("exports Micah Wrenhart with adult age on the companion extension", () => {
+    const card = characterToV2Card(MICAH_WRENHART);
+    const parsed = parseCharacterCard(card);
+    expect(parsed.draft.name).toBe("Micah Wrenhart");
+    expect(parsed.draft.age).toBe(24);
+    expect(parsed.draft.tags).toContain("wrenhart");
+    expect(parsed.draft.firstMes).toContain("questionable armor");
   });
 
   it("throws on junk JSON", () => {
