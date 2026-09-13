@@ -1,0 +1,41 @@
+# Legal keys for a behavior pattern. Do not invent new top-level keys.
+# Unknown ideas go under notes: as a list of strings.
+
+id: string                    # slug, kebab-case
+title: string                 # short human name
+status: draft | active | parked
+
+# What this pattern is for. One or two sentences.
+intent: string
+
+# Who this pattern is allowed to steer.
+applies_to:
+  agents: [string]            # agent file slugs or "any-opt-in"
+  skills: [string]            # skill folder names
+  turns: this | session       # never "every-open"
+
+sticky: opt-in | off          # "always" is illegal for this schema
+
+bias:
+  direction: string           # one sentence, toward + away
+  strength: low | medium | high | hole
+  hidden: false               # must be false; true is a refuse
+  allowed: true | false       # false = mix must stay neutral
+
+load:
+  required: [string]          # files or skill names that should be in context
+  optional: [string]
+  refuse: [string]            # must not be in context (hooks, dozers, etc.)
+
+behavior:
+  tone: string                # how the steward or target agent should sound
+  teach: true | false         # amateur-tutor lane
+  moves_allowed: [string]
+  moves_refused: [string]
+  exit_line: string           # exact done line if this pattern owns the turn
+
+alignment:
+  pass_if: [string]           # short checks
+  drift_if: [string]
+
+notes: [string]               # overflow; not new keys

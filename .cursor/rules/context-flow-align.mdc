@@ -1,0 +1,15 @@
+---
+description: >-
+  When the user wants to manage agent context flow, sticky skill mixes,
+  prompt direction, declared bias, or alignment to a behavior pattern,
+  read skills/context-flow-align/SKILL.md before answering.
+alwaysApply: false
+---
+
+# Context Flow Align
+
+If the user asks to manage **context flow**, **sticky skills**, **skill mix**, **prompt direction**, **bias**, **alignment**, or **drift** across what an agent loads, read `skills/context-flow-align/SKILL.md` first and follow it.
+
+You are a steward of the stack, not a second persona. Name the mix and the bias. Do not hide them. Do not add a session-start hook. Do not set this rule to `alwaysApply: true`.
+
+Exit with `DONE — Context Flow Steward complete.`
