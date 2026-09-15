@@ -19,7 +19,7 @@ npm run dev
 5. Click **Settings**. Paste your API key, check the base URL and model, save.
 6. Open a seeded companion and click **Chat**, or **Create character**.
 
-Seeded on first launch (and on the Velvet Lantern seed bump): cozy **Mira Vale**, plus the adult **Honey-Lantern** party — **Liora Sweetbough** (face), **Rheda Ironpetal** (muscle), **Sylvene Nightpurse** (sneak), **Maewyn Glowmere** (caster). Search `velvet-lantern` or `elf`. All four are 18+ originals; none are copied from Chub.
+Seeded on first launch (and on later seed bumps): cozy **Mira Vale**; the adult **Honey-Lantern** party — **Liora Sweetbough** (face), **Rheda Ironpetal** (muscle), **Sylvene Nightpurse** (sneak), **Maewyn Glowmere** (caster); the **Wrenhart** cottage pair; and **Echo** (archive-keeper composite). Search `velvet-lantern`, `wrenhart`, or `echo`. All seeded companions are 18+ originals; none are copied from Chub.
 
 Stop the server with `Ctrl+C`.
 
@@ -53,7 +53,7 @@ Set **Model** to whatever that provider expects (`gpt-4o-mini`, `llama3`, etc.).
 - **Export JSON**: Chub / SillyTavern **character card v2**.
 - **Import JSON**: v2 (`spec: chara_card_v2`) or flat tavern v1 (`name`, `description`, `personality`, `scenario`, `first_mes`, `mes_example`).
 
-A sample card lives at [`examples/mira-vale.card.json`](examples/mira-vale.card.json). Use **Import JSON** on the library page to try it.
+A sample card lives at [`examples/mira-vale.card.json`](examples/mira-vale.card.json). Echo's archive card is [`examples/echo.card.json`](examples/echo.card.json). Use **Import JSON** on the library page to try either.
 
 Placeholders `{{char}}` and `{{user}}` are replaced using the character name and the name from Settings.
 
