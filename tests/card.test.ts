@@ -4,7 +4,12 @@ import {
   parseCharacterCard,
   parseCharacterCardJson,
 } from "@/lib/card";
-import { MICAELA_WRENHART, MICAH_WRENHART, SEED_CHARACTER } from "@/lib/seed";
+import {
+  ECHO,
+  MICAELA_WRENHART,
+  MICAH_WRENHART,
+  SEED_CHARACTER,
+} from "@/lib/seed";
 
 describe("character cards", () => {
   it("round-trips a v2 Chub/Tavern card", () => {
@@ -53,6 +58,17 @@ describe("character cards", () => {
     expect(parsed.draft.tags).toContain("micaela");
     expect(parsed.draft.tags).not.toContain("femboy");
     expect(parsed.draft.firstMes).toContain("brave wife");
+  });
+
+  it("exports Echo as an adult archive-keeper composite", () => {
+    const card = characterToV2Card(ECHO);
+    const parsed = parseCharacterCard(card);
+    expect(parsed.draft.name).toBe("Echo");
+    expect(parsed.draft.age).toBe(26);
+    expect(parsed.draft.tags).toContain("echo");
+    expect(parsed.draft.tags).toContain("archive");
+    expect(parsed.draft.firstMes).toContain("What are we building today?");
+    expect(parsed.draft.mesExample).toContain("a little bit of this");
   });
 
   it("throws on junk JSON", () => {
