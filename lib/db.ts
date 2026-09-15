@@ -62,6 +62,20 @@ async function ensureSeed() {
       if (existing) {
         const nextAvatar = character.avatarDataUrl;
         const prevAvatar = existing.avatarDataUrl;
+        if (character.id === "seed-candy") {
+          const refresh = db.transaction(CHAR_STORE, "readwrite");
+          refresh.objectStore(CHAR_STORE).put({
+            ...character,
+            createdAt: existing.createdAt,
+            updatedAt: now,
+            avatarDataUrl:
+              prevAvatar && !prevAvatar.startsWith("/party/")
+                ? prevAvatar
+                : nextAvatar,
+          });
+          await txDone(refresh);
+          continue;
+        }
         if (
           nextAvatar &&
           (prevAvatar === null || prevAvatar.startsWith("/party/"))

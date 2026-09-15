@@ -19,7 +19,7 @@ npm run dev
 5. Click **Settings**. Paste your API key, check the base URL and model, save.
 6. Open a seeded companion and click **Chat**, or **Create character**.
 
-Seeded on first launch (and on later seed bumps): cozy **Mira Vale**; the adult **Honey-Lantern** party; the **Wrenhart** cottage pair; **Echo** (archive-keeper); and **Candy** (22, girlfriend). Search `velvet-lantern`, `wrenhart`, `echo`, or `candy`. All seeded companions are 18+ originals; none are copied from Chub.
+Seeded on first launch (and on later seed bumps): cozy **Mira Vale**; the adult **Honey-Lantern** party; the **Wrenhart** cottage pair; **Echo** (archive-keeper); and **Candy** (21, girlfriend). Search `velvet-lantern`, `wrenhart`, `echo`, or `candy`. All seeded companions are 18+ originals; none are copied from Chub.
 
 Stop the server with `Ctrl+C`.
 
