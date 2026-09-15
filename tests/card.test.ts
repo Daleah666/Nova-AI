@@ -5,6 +5,7 @@ import {
   parseCharacterCardJson,
 } from "@/lib/card";
 import {
+  CANDY,
   ECHO,
   MICAELA_WRENHART,
   MICAH_WRENHART,
@@ -69,6 +70,18 @@ describe("character cards", () => {
     expect(parsed.draft.tags).toContain("archive");
     expect(parsed.draft.firstMes).toContain("What are we building today?");
     expect(parsed.draft.mesExample).toContain("a little bit of this");
+  });
+
+  it("exports Candy as an adult 21+ girlfriend, never nineteen", () => {
+    const card = characterToV2Card(CANDY);
+    const parsed = parseCharacterCard(card);
+    expect(parsed.draft.name).toBe("Candy");
+    expect(parsed.draft.age).toBe(22);
+    expect(parsed.draft.age).toBeGreaterThanOrEqual(21);
+    expect(parsed.draft.tags).toContain("candy");
+    expect(parsed.draft.firstMes).toContain("That's me now");
+    expect(parsed.draft.description.toLowerCase()).not.toContain("nineteen");
+    expect(parsed.draft.creatorNotes).toContain("21+");
   });
 
   it("throws on junk JSON", () => {
