@@ -1,2 +1,2 @@
 hub/** -text
-updater/*.bat text eol=crlf
+updater/*.bat -text
