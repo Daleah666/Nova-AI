@@ -37,9 +37,17 @@
     } catch (e) {}
   }
 
-  function announce() {
+  let extVersion = '';
+  async function announce() {
     if (sawHello) return;
-    post('present', { version: '1.6.0', caps: ['grok', 'relay'] });
+    if (!extVersion) {
+      try {
+        const r = await fetch('/__dev/status', { cache: 'no-store' });
+        const j = await r.json();
+        if (j && typeof j.extensionVersion === 'string' && j.extensionVersion) extVersion = j.extensionVersion;
+      } catch (e) {}
+    }
+    post('present', { version: extVersion || '1.6.1', caps: ['grok', 'relay', 'keys'] });
   }
 
   function paired() {
@@ -179,6 +187,10 @@
     if (d.op === 'grokKeyStatus' || d.op === 'grokKeyClear' || d.op === 'grokKeyTest') return devPost('/__dev/grok', { op: d.op });
     if (d.op === 'grokKeySet') return devPost('/__dev/grok', { op: d.op, key: a.key });
     if (d.op === 'grokImage') return devPost('/__dev/grok', { op: d.op, mode: a.mode, prompt: a.prompt, n: a.n, aspect: a.aspect, model: a.model, image: a.image });
+    if (d.op === 'keyStatus') return devPost('/__dev/keys', { op: 'status' });
+    if (d.op === 'keySet') return devPost('/__dev/keys', { op: 'set', provider: a.provider, key: a.key });
+    if (d.op === 'keyClear') return devPost('/__dev/keys', { op: 'clear', provider: a.provider });
+    if (d.op === 'keyTest') return devPost('/__dev/keys', { op: 'test', provider: a.provider });
     if (d.op === 'openExtDetails') return { error: 'This local server is not the Chrome extension, so it cannot open chrome://extensions.' };
     return { error: 'The local Hub server does not do that. The Chrome extension does.' };
   }

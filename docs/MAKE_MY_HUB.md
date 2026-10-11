@@ -57,8 +57,9 @@ You do not need the Chrome extension for the page to load. The extension is stil
 
 Copy [`.env.example`](../.env.example) to a file named `.env` in this same folder. Fill in only the keys you have. `.env` stays on your computer. Do not commit it, and do not paste keys into the repo.
 
-- **ANTHROPIC_API_KEY** — Claude, for chatting with Nyx and for Familiar's brain. If this is empty, chat tells you the key is missing. The clock, to-dos, and apps still work.
-- **XAI_API_KEY** — Grok pictures. You can leave this empty and paste the key in the Hub instead (robot icon, **AI & keys**). A pasted key is saved in `~/.the-hub/xai-key` on your computer, not in this repo. If both are set, the pasted key is the one that is used. **Remove key** in the Hub deletes the pasted one. To drop the `.env` key, delete that line and start `npm run dev` again.
+- **ANTHROPIC_API_KEY** — Claude, for chatting with Nyx and for Familiar's brain on this computer. On claude.ai the Hub uses your signed-in Claude account and does not need this key. Here, chat needs it. You can put it in `.env`, or paste an `sk-ant-` key in the Hub (robot icon, **AI & keys**). A pasted key is saved in `~/.the-hub/vault.json` on your computer, not in this repo, and it is used instead of `.env`. If this is empty, chat tells you the key is missing. The clock, to-dos, and apps still work.
+- **XAI_API_KEY** — Grok pictures. Same idea: leave it empty and paste the key under **AI & keys**, or put it in `.env`. A pasted key wins. **Remove** in the Hub deletes the pasted copy. To drop the `.env` key, delete that line and start `npm run dev` again.
+- **OPENAI_API_KEY**, **GEMINI_API_KEY**, and **ELEVENLABS_API_KEY** — optional, for add-ons. Paste them in **AI & keys** or put them in `.env`. The page works without them. Gemini also accepts `GOOGLE_API_KEY` in `.env`.
 
 Google Calendar, Drive, and Gmail do not use a key in this repo. The page reaches them through Claude's connectors, which only exist when you open the Hub on claude.ai while you are signed in. Locally, the page says that.
 
@@ -76,7 +77,7 @@ That is the update. It downloads the newest Hub from Claude into `hub/` and chec
 
 While `npm run dev` is running, open http://127.0.0.1:8080/__dev/status
 
-It says whether Claude, Grok, the relay, and ActivityWatch are connected. It does not show your keys.
+It says whether Claude, Grok, the relay, and ActivityWatch are connected, and which extension version the page is using. It does not show your keys. Pasted keys live in `~/.the-hub/vault.json` on your computer.
 
 Relay health check (no key): http://127.0.0.1:47800/health
 
@@ -100,7 +101,7 @@ To start only the relay: `npm run relay`
 - [`hub/version.json`](../hub/version.json): which Claude version this copy is
 - [`scripts/sync-hub.mjs`](../scripts/sync-hub.mjs): pulls the newest version from Claude
 - [`scripts/dev-hub.mjs`](../scripts/dev-hub.mjs): serves the Hub on your computer and starts the relay
-- [`scripts/hub-bridge.js`](../scripts/hub-bridge.js): talks to that local server for Claude, Grok, and the relay
+- [`scripts/hub-bridge.js`](../scripts/hub-bridge.js): talks to that local server for Claude, Grok, the key vault, and the relay
 - [`.env.example`](../.env.example): the list of optional keys, with no real secrets
 - [`updater/Update-The-Hub.bat`](../updater/Update-The-Hub.bat): the Windows updater
 

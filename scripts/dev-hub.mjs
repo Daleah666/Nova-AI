@@ -19,7 +19,7 @@ const APP = 'nova-hub-dev';
 const BIND = '127.0.0.1';
 const XAI = 'https://api.x.ai/v1';
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
-const MISSING_CLAUDE = 'Claude is not connected on this computer yet. Copy .env.example to .env, put your key in ANTHROPIC_API_KEY, and run npm run dev again. The clock, to-dos, and the relay keep working without it.';
+const MISSING_CLAUDE = 'Claude is not connected on this computer yet. Copy .env.example to .env and put your key in ANTHROPIC_API_KEY, or paste an sk-ant- key under AI & keys. Then ask again. The clock, to-dos, and the relay keep working without it.';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -79,15 +79,80 @@ let relayChild = null;
 let stopping = false;
 let awCache = { at: 0, data: { available: false } };
 
-function claudeKey() { return (process.env.ANTHROPIC_API_KEY || '').trim(); }
-function grokKey() {
-  const saved = readTrim(path.join(hubHome(), 'xai-key'));
+// Same providers and shapes as the extension's key vault (background.js).
+// A pasted key is saved in ~/.the-hub/vault.json. An environment key is used only when nothing is pasted.
+const VAULT = {
+  xai: { ok: (k) => /^xai-[A-Za-z0-9_-]{20,}$/.test(k), name: 'xAI (Grok)', env: ['XAI_API_KEY'] },
+  anthropic: { ok: (k) => /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k), name: 'Anthropic (Claude)', env: ['ANTHROPIC_API_KEY'] },
+  openai: { ok: (k) => /^sk-(?!ant-)[A-Za-z0-9_-]{20,}$/.test(k), name: 'OpenAI', env: ['OPENAI_API_KEY'] },
+  gemini: { ok: (k) => /^AIza[0-9A-Za-z_-]{30,}$/.test(k), name: 'Google Gemini', env: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'] },
+  elevenlabs: { ok: (k) => /^(sk_[A-Za-z0-9]{20,}|[a-f0-9]{32})$/.test(k), name: 'ElevenLabs', env: ['ELEVENLABS_API_KEY'] },
+};
+
+function vaultFile() { return path.join(hubHome(), 'vault.json'); }
+function readVault() {
+  try {
+    const j = JSON.parse(fs.readFileSync(vaultFile(), 'utf8'));
+    return j && typeof j === 'object' && !Array.isArray(j) ? j : {};
+  } catch { return {}; }
+}
+function writeVault(obj) {
+  const clean = {};
+  for (const p of Object.keys(VAULT)) {
+    if (typeof obj[p] === 'string' && obj[p]) clean[p] = obj[p];
+  }
+  const file = vaultFile();
+  if (!Object.keys(clean).length) { fs.rmSync(file, { force: true }); return; }
+  const dir = hubHome();
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(clean) + '\n', { mode: 0o600 });
+  try { fs.chmodSync(file, 0o600); } catch {}
+}
+function envKey(p) {
+  for (const name of VAULT[p].env) {
+    const v = (process.env[name] || '').trim();
+    if (v) return v;
+  }
+  return '';
+}
+function savedKey(p) {
+  const stored = readVault()[p];
+  if (typeof stored === 'string' && stored.trim()) return stored.trim();
+  if (p === 'xai') return readTrim(path.join(hubHome(), 'xai-key'));
+  return '';
+}
+function effectiveKey(p) {
+  const saved = savedKey(p);
   if (saved) return { key: saved, where: 'file' };
-  const env = (process.env.XAI_API_KEY || '').trim();
+  const env = envKey(p);
   if (env) return { key: env, where: 'env' };
   return { key: '', where: '' };
 }
+function setVaultKey(p, key) {
+  const next = readVault();
+  next[p] = key;
+  writeVault(next);
+  if (p === 'xai') writeGrokKey(key);
+}
+function clearVaultKey(p) {
+  const next = readVault();
+  delete next[p];
+  writeVault(next);
+  if (p === 'xai') fs.rmSync(path.join(hubHome(), 'xai-key'), { force: true });
+}
+function keyView(p) {
+  const k = effectiveKey(p).key;
+  return { set: !!k, last4: k ? k.slice(-4) : '' };
+}
+function claudeKey() { return effectiveKey('anthropic').key; }
+function grokKey() { return effectiveKey('xai'); }
 function hubCode() { return readTrim(path.join(hubHome(), 'hub-code')); }
+function extensionVersion() {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(HUB, 'extension', 'manifest.json'), 'utf8'));
+    return typeof m.version === 'string' ? m.version.slice(0, 12) : '';
+  } catch { return ''; }
+}
 
 function send(res, code, obj, type) {
   const body = typeof obj === 'string' ? obj : JSON.stringify(obj);
@@ -173,19 +238,25 @@ async function ourServerIsUp() {
 
 function statusBody() {
   const g = grokKey();
+  const c = effectiveKey('anthropic');
   return {
     ok: true,
     app: APP,
-    claude: !!claudeKey(),
+    claude: !!c.key,
+    claudeWhere: c.where || null,
     grok: !!g.key,
     grokWhere: g.where || null,
+    extensionVersion: extensionVersion(),
     relayPort: RELAY_PORT,
     page: 'http://127.0.0.1:' + PORT + '/',
     hints: {
-      claude: claudeKey() ? 'Claude key is set. It stays in .env and is not sent to the browser.' : MISSING_CLAUDE,
+      claude: c.key
+        ? (c.where === 'file' ? 'Using the Claude key saved on this computer in ~/.the-hub/vault.json.' : 'Using ANTHROPIC_API_KEY from the environment. It is not sent to the browser.')
+        : MISSING_CLAUDE,
       grok: g.key
-        ? (g.where === 'file' ? 'Using the key saved on this computer in ~/.the-hub/xai-key.' : 'Using XAI_API_KEY from the environment.')
-        : 'No Grok key. Add XAI_API_KEY to .env, or paste a key in the Hub under AI & keys. A pasted key is saved in ~/.the-hub/xai-key.',
+        ? (g.where === 'file' ? 'Using the Grok key saved on this computer in ~/.the-hub/vault.json.' : 'Using XAI_API_KEY from the environment.')
+        : 'No Grok key. Add XAI_API_KEY to .env, or paste a key in the Hub under AI & keys. A pasted key is saved in ~/.the-hub/vault.json.',
+      keys: 'AI & keys can also store OpenAI, Gemini, and ElevenLabs. Pasted keys stay in ~/.the-hub/vault.json. A .env key is used only when nothing is pasted. Remove in the Hub deletes the pasted copy. Edit .env and run npm run dev again to drop an environment key.',
       google: 'Calendar, Drive, and Gmail connect through Claude when you open the Hub on claude.ai. This page has no separate Google client.',
       activitywatch: 'Optional. If ActivityWatch is running on port 5600, the Activity tab shows it. If it is not installed, the page says so.',
       relay: 'The relay listens on 127.0.0.1:' + RELAY_PORT + '. npm run dev starts it. Its code stays in ~/.the-hub/hub-code.',
@@ -287,13 +358,13 @@ async function handleGrok(body) {
     return { set: !!k, last4: k ? k.slice(-4) : '' };
   }
   if (op === 'grokKeyClear') {
-    fs.rmSync(path.join(hubHome(), 'xai-key'), { force: true });
+    clearVaultKey('xai');
     return { ok: true };
   }
   if (op === 'grokKeySet') {
     const k = String(body.key || '').trim();
-    if (!/^xai-[A-Za-z0-9_-]{20,}$/.test(k)) return { error: "That doesn't look like an xAI key (they start with xai-)." };
-    writeGrokKey(k);
+    if (!VAULT.xai.ok(k)) return { error: "That doesn't look like an xAI key (they start with xai-)." };
+    setVaultKey('xai', k);
     return { ok: true, last4: k.slice(-4) };
   }
   if (op === 'grokKeyTest') {
@@ -308,6 +379,45 @@ async function handleGrok(body) {
   }
   if (op === 'grokImage') return grokImage(body);
   return { error: 'Unknown Grok request.' };
+}
+
+const KEY_TEST = {
+  xai: (k) => [XAI + '/api-key', { headers: { Authorization: 'Bearer ' + k } }],
+  anthropic: (k) => ['https://api.anthropic.com/v1/models?limit=1', { headers: { 'x-api-key': k, 'anthropic-version': '2023-06-01' } }],
+  openai: (k) => ['https://api.openai.com/v1/models', { headers: { Authorization: 'Bearer ' + k } }],
+  gemini: (k) => ['https://generativelanguage.googleapis.com/v1beta/models?pageSize=1', { headers: { 'x-goog-api-key': k } }],
+  elevenlabs: (k) => ['https://api.elevenlabs.io/v1/user', { headers: { 'xi-api-key': k } }],
+};
+
+async function handleKeys(body) {
+  const op = String(body.op || '');
+  const provider = String(body.provider || '');
+  if (op === 'status') {
+    const out = {};
+    for (const p of Object.keys(VAULT)) out[p] = keyView(p);
+    return out;
+  }
+  const spec = VAULT[provider];
+  if (!spec) return { error: 'Unknown service.' };
+  if (op === 'clear') { clearVaultKey(provider); return { ok: true }; }
+  if (op === 'set') {
+    const k = String(body.key || '').trim();
+    if (!spec.ok(k)) return { error: "That doesn't look like " + (/^[AEIOU]/.test(spec.name) ? 'an ' : 'a ') + spec.name + ' key.' };
+    setVaultKey(provider, k);
+    return { ok: true, last4: k.slice(-4) };
+  }
+  if (op === 'test') {
+    const k = effectiveKey(provider).key;
+    if (!k) return { ok: false, error: 'nokey' };
+    if (provider === 'xai') return handleGrok({ op: 'grokKeyTest' });
+    try {
+      const req = KEY_TEST[provider](k);
+      const r = await fetch(req[0], { ...req[1], signal: AbortSignal.timeout(12000) });
+      if (r.ok) return { ok: true };
+      return { ok: false, error: (r.status === 401 || r.status === 403 ? "This key doesn't work (" : 'The service said no (') + r.status + ').' };
+    } catch { return { ok: false, error: "Couldn't reach " + spec.name + '. Check your internet.' }; }
+  }
+  return { error: 'Unknown key request.' };
 }
 
 async function grokImage(m) {
@@ -454,14 +564,15 @@ async function onRequest(req, res) {
   if (req.method === 'GET' && url === '/__dev/bridge.js') {
     return send(res, 200, fs.readFileSync(BRIDGE, 'utf8'), 'text/javascript; charset=utf-8');
   }
-  if (req.method === 'POST' && (url === '/__dev/relay' || url === '/__dev/grok' || url === '/__dev/claude')) {
-    const max = url === '/__dev/grok' ? 22e6 : 8e6;
+  if (req.method === 'POST' && (url === '/__dev/relay' || url === '/__dev/grok' || url === '/__dev/claude' || url === '/__dev/keys')) {
+    const max = url === '/__dev/grok' ? 22e6 : url === '/__dev/keys' ? 65536 : 8e6;
     let body;
     try { body = await readJson(req, max); }
     catch (e) { return send(res, e.status || 400, { ok: false, error: e.message || 'Bad request.' }); }
     try {
       if (url === '/__dev/relay') return send(res, 200, await handleRelay(body));
       if (url === '/__dev/grok') return send(res, 200, await handleGrok(body));
+      if (url === '/__dev/keys') return send(res, 200, await handleKeys(body));
       return send(res, 200, await handleClaude(body));
     } catch (e) {
       log(url + ' failed: ' + (e && e.message ? e.message : 'error'));
@@ -484,8 +595,10 @@ function banner(relayState) {
   console.log('');
   console.log('  My Hub is running at http://127.0.0.1:' + PORT + '/');
   console.log('  Relay: ' + (relayState === 'down' ? 'not running' : 'http://127.0.0.1:' + RELAY_PORT + '/health'));
-  console.log('  Claude: ' + (claudeKey() ? 'key set' : 'no key (chat will explain how to add one)'));
+  const c = effectiveKey('anthropic');
+  console.log('  Claude: ' + (c.key ? 'key set (' + c.where + ')' : 'no key (chat will explain how to add one)'));
   console.log('  Grok: ' + (g.key ? 'key set (' + g.where + ')' : 'no key (optional)'));
+  console.log('  Extension the page sees: ' + (extensionVersion() || 'unknown') + ' (keys, Grok, relay)');
   console.log('  Status: http://127.0.0.1:' + PORT + '/__dev/status');
   console.log('  Leave this window open. Ctrl+C stops the page and the relay this command started.');
   console.log('');
