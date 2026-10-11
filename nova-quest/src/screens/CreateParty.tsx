@@ -1,15 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
+import { processArtFile } from '../art/process'
+import { heroRef } from '../art/resolve'
 import { sfx } from '../audio'
 import { Portrait } from '../components/Portrait'
 import { CLASS_LIST, CLASSES, SKILLS } from '../content/classes'
-import { assignScores, createCharacter, deriveStats } from '../engine/character'
-import { roll } from '../engine/dice'
+import { assignScores, createCharacter, deriveStats, rollScores } from '../engine/character'
 import { ABILITIES, abilityMod, formatMod } from '../engine/rules'
 import type { Character, ClassId } from '../engine/types'
-import { useGame } from '../store/game'
-import { fileToPortrait } from '../util/image'
+import { useArt } from '../store/art'
+import { MAX_PARTY, useGame } from '../store/game'
 
-const MAX_PARTY = 4
 const NAMES: Record<ClassId, string[]> = {
   fighter: ['Sven', 'Brunhild', 'Rook', 'Kael'],
   wizard: ['Elowen', 'Fizzwick', 'Orrin', 'Nyx'],
@@ -17,18 +17,18 @@ const NAMES: Record<ClassId, string[]> = {
   cleric: ['Aurelia', 'Brother Tam', 'Sol', 'Maren'],
 }
 
-function rollSix(): number[] {
-  return Array.from({ length: 6 }, () => roll('4d6kh3').total)
-}
-
 export function CreateParty() {
   const beginAdventure = useGame((s) => s.beginAdventure)
   const setScreen = useGame((s) => s.setScreen)
+  const setArt = useArt((s) => s.setArt)
+  const removeArt = useArt((s) => s.removeArt)
   const [party, setParty] = useState<Character[]>([])
   const [classId, setClassId] = useState<ClassId>('fighter')
   const [name, setName] = useState('')
-  const [rolled, setRolled] = useState<number[]>(rollSix)
-  const [portrait, setPortrait] = useState<string | undefined>()
+  const [rolled, setRolled] = useState<number[]>(rollScores)
+  const [portrait, setPortrait] = useState<{ url: string; original?: string } | undefined>()
+  const [bio, setBio] = useState('')
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -40,25 +40,37 @@ export function CreateParty() {
   const addHero = () => {
     if (party.length >= MAX_PARTY) return
     sfx('confirm')
-    setParty([...party, createCharacter(name || placeholder, cls, abilities, portrait)])
+    const hero = createCharacter(name || placeholder, cls, abilities)
+    if (bio) hero.bio = bio
+    if (portrait) setArt(`hero:${hero.id}`, portrait.url, portrait.original)
+    setParty([...party, hero])
     setName('')
+    setBio('')
     setPortrait(undefined)
-    setRolled(rollSix())
+    setRolled(rollScores())
   }
 
   const quickParty = () => {
     sfx('confirm')
     const ids: ClassId[] = ['fighter', 'wizard', 'rogue', 'cleric']
-    setParty(ids.map((id, i) => createCharacter(NAMES[id][i % 4], CLASSES[id], assignScores(rollSix(), CLASSES[id]))))
+    setParty(ids.map((id, i) => createCharacter(NAMES[id][i % 4], CLASSES[id], assignScores(rollScores(), CLASSES[id]))))
   }
 
   const onFile = async (f: File | undefined) => {
     if (!f) return
+    setBusy(true)
     try {
-      setPortrait(await fileToPortrait(f))
+      const art = await processArtFile(f)
+      setPortrait({ url: art.url, original: art.original })
+      if (art.card) {
+        setName(art.card.name.slice(0, 20))
+        setBio(art.card.description.slice(0, 400))
+      }
       setError('')
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -85,7 +97,7 @@ export function CreateParty() {
                   setClassId(c.id)
                 }}
               >
-                <Portrait sprite={c.sprite} size={56} alt={c.name} />
+                <Portrait art={{ kind: 'class', id: c.id }} variant="full" sprite={c.sprite} size={96} alt={c.name} />
                 <span className="pixel class-name">{c.name}</span>
                 <span className="muted small-text">{c.tagline}</span>
               </button>
@@ -94,9 +106,9 @@ export function CreateParty() {
 
           <h2>2. Name &amp; portrait</h2>
           <div className="row">
-            <div className="portrait-drop" onClick={() => fileRef.current?.click()} title="Upload your own portrait">
-              <Portrait image={portrait} sprite={cls.sprite} size={80} alt="portrait" />
-              <span className="pixel tiny">{portrait ? 'change' : 'upload'}</span>
+            <div className="portrait-drop" onClick={() => fileRef.current?.click()} title="Upload a PNG or a character card">
+              <Portrait image={portrait?.url} art={{ kind: 'class', id: classId }} sprite={cls.sprite} size={80} alt="portrait" />
+              <span className="pixel tiny">{busy ? '...' : portrait ? 'change' : 'upload'}</span>
             </div>
             <div className="col grow">
               <input
@@ -108,10 +120,29 @@ export function CreateParty() {
                 onKeyDown={(e) => e.key === 'Enter' && addHero()}
                 aria-label="Hero name"
               />
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  void onFile(e.target.files?.[0])
+                  e.target.value = ''
+                }}
+              />
+              <span className="muted small-text">
+                Upload any PNG or a character card (SillyTavern / Tavern PNG). Flat backgrounds are removed automatically.
+              </span>
+              {bio && <span className="muted small-text bio-preview">{bio}</span>}
               {portrait && (
-                <button className="btn small ghost" onClick={() => setPortrait(undefined)}>
-                  Use pixel sprite instead
+                <button
+                  className="btn small ghost"
+                  onClick={() => {
+                    setPortrait(undefined)
+                    setBio('')
+                  }}
+                >
+                  Use the class art instead
                 </button>
               )}
               {error && <span className="danger-text">{error}</span>}
@@ -133,7 +164,7 @@ export function CreateParty() {
               className="btn small"
               onClick={() => {
                 sfx('dice')
-                setRolled(rollSix())
+                setRolled(rollScores())
               }}
             >
               Reroll
@@ -156,14 +187,20 @@ export function CreateParty() {
               const s = deriveStats(c, CLASSES[c.classId])
               return (
                 <div key={c.id} className="party-row">
-                  <Portrait image={c.portrait} sprite={CLASSES[c.classId].sprite} size={48} alt={c.name} />
+                  <Portrait art={heroRef(c)} sprite={CLASSES[c.classId].sprite} size={48} alt={c.name} />
                   <div className="grow">
                     <div className="pixel tiny">{c.name}</div>
                     <div className="muted">
                       {CLASSES[c.classId].name} | HP {s.maxHp} | MP {s.maxMp} | AC {s.ac}
                     </div>
                   </div>
-                  <button className="btn small ghost" onClick={() => setParty(party.filter((p) => p.id !== c.id))}>
+                  <button
+                    className="btn small ghost"
+                    onClick={() => {
+                      removeArt(`hero:${c.id}`)
+                      setParty(party.filter((p) => p.id !== c.id))
+                    }}
+                  >
                     Remove
                   </button>
                 </div>

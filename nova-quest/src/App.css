@@ -84,12 +84,35 @@
   line-height: 1;
   color: var(--ink-dim);
 }
-.portrait-img {
-  object-fit: cover;
+.art-bust {
+  display: inline-block;
+  flex: none;
+  overflow: hidden;
   border-radius: 6px;
   border: 2px solid var(--win-border);
-  image-rendering: auto;
-  background: #070b26;
+  background: radial-gradient(circle at 50% 35%, #34449a, #0a0f2e 75%);
+}
+.art-bust img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  scale: 1.7;
+  transform-origin: 50% 3%;
+}
+.art-bust.contain img {
+  object-fit: contain;
+  object-position: center;
+  scale: 1;
+}
+.art-full {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: bottom;
+  user-select: none;
 }
 
 /* ---------- toasts ---------- */
@@ -179,8 +202,12 @@
 }
 .title-parade {
   display: flex;
-  gap: 10px;
+  align-items: flex-end;
+  gap: 4px;
   z-index: 1;
+}
+.title-parade .art-full {
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.5));
 }
 .parade-sprite {
   animation: hop 1.2s ease-in-out infinite;
@@ -399,7 +426,7 @@
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6));
   animation: bob 0.6s steps(2) infinite;
 }
-.player .portrait-img {
+.player .art-bust {
   border-radius: 50%;
 }
 @keyframes bob {
@@ -507,16 +534,25 @@
 .vn-portrait {
   position: absolute;
   bottom: -10px;
+  display: flex;
+  align-items: flex-end;
   filter: brightness(0.55) drop-shadow(0 6px 0 rgba(0, 0, 0, 0.4));
   transition:
     filter 200ms ease,
     transform 200ms ease;
   animation: slide-in 300ms ease;
 }
-.vn-portrait svg,
-.vn-portrait img {
+.vn-portrait svg {
   width: clamp(140px, 26vw, 300px) !important;
   height: clamp(140px, 26vw, 300px) !important;
+}
+.vn-portrait:has(.art-full) {
+  top: 2%;
+  bottom: -70px;
+}
+.vn-portrait .art-full {
+  height: 100% !important;
+  max-width: 44cqw;
 }
 .vn-portrait.left {
   left: 6%;
@@ -822,8 +858,13 @@
     filter: grayscale(1) brightness(2);
   }
 }
-.enemy-sprite svg {
+.enemy-sprite svg,
+.enemy-sprite .art-full {
   filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.35));
+}
+.enemy-sprite .art-full {
+  max-height: 32cqh;
+  max-width: 24cqw;
 }
 .enemy-info {
   display: flex;
@@ -1224,6 +1265,64 @@
   padding: 6px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.25);
+}
+.art-drop {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 2px dashed var(--ink-dim);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+.art-drop:hover,
+.art-drop:focus-visible,
+.art-drop.dragging {
+  border-color: var(--accent);
+  background: rgba(255, 122, 198, 0.08);
+}
+.art-drop[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: wait;
+}
+.import-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.import-thumb {
+  width: 56px;
+  height: 72px;
+  object-fit: contain;
+  flex: none;
+  background: repeating-conic-gradient(#2a2f5a 0 25%, #1c2046 0 50%) 0 0 / 12px 12px;
+  border-radius: 6px;
+}
+.input.small {
+  width: auto;
+  padding: 2px 6px;
+  font-size: 16px;
+}
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 122, 198, 0.2);
+  color: var(--accent);
+  font-size: 9px;
+  vertical-align: middle;
+}
+.bio-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .focus-ring {
   position: relative;

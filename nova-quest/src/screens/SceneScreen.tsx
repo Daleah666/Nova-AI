@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { heroRef } from '../art/resolve'
 import { sfx } from '../audio'
 import { DieRoll } from '../components/DieRoll'
 import { Portrait } from '../components/Portrait'
@@ -25,7 +26,6 @@ export function SceneScreen() {
   const party = useGame((s) => s.party)
   const gold = useGame((s) => s.gold)
   const flags = useGame((s) => s.flags)
-  const npcArt = useGame((s) => s.npcArt)
   const advance = useGame((s) => s.advance)
   const choose = useGame((s) => s.choose)
   const rollCheck = useGame((s) => s.rollCheck)
@@ -123,12 +123,12 @@ export function SceneScreen() {
       <div className="scene-stage" onClick={onAdvance}>
         {lead && (
           <div className={`vn-portrait left ${node.speaker === 'lead' ? 'speaking' : ''}`}>
-            <Portrait image={lead.portrait} sprite={CLASSES[lead.classId].sprite} size={220} alt={lead.name} />
+            <Portrait art={heroRef(lead)} variant="full" sprite={CLASSES[lead.classId].sprite} size={480} alt={lead.name} />
           </div>
         )}
         {rightNpc && (
           <div key={rightNpc.id} className={`vn-portrait right ${node.speaker === rightNpc.id ? 'speaking' : ''}`}>
-            <Portrait image={npcArt[rightNpc.id]} sprite={rightNpc.sprite} size={220} alt={rightNpc.name} flip />
+            <Portrait art={{ kind: 'npc', id: rightNpc.id }} variant="full" sprite={rightNpc.sprite} size={480} alt={rightNpc.name} flip />
           </div>
         )}
       </div>
@@ -198,7 +198,7 @@ export function SceneScreen() {
                             setPending({ ...pending, rollerId: p.id })
                           }}
                         >
-                          <Portrait image={p.portrait} sprite={CLASSES[p.classId].sprite} size={40} alt={p.name} />
+                          <Portrait art={heroRef(p)} sprite={CLASSES[p.classId].sprite} size={40} alt={p.name} />
                           <span>{p.name}</span>
                           <span className="pixel tiny">{formatMod(mod)}</span>
                         </button>

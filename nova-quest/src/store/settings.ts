@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { ArtStyle } from '../art/resolve'
 
 export interface Settings {
   aiBaseUrl: string
@@ -12,6 +13,7 @@ export interface Settings {
   textSpeed: number
   focusMinutes: number
   breakMinutes: number
+  artStyle: ArtStyle
 }
 
 interface SettingsStore extends Settings {
@@ -31,6 +33,7 @@ export const useSettings = create<SettingsStore>()(
       textSpeed: 45,
       focusMinutes: 25,
       breakMinutes: 5,
+      artStyle: 'illustrated',
       update: (patch) => set(patch),
     }),
     { name: 'nova-quest-settings' },

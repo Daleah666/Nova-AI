@@ -1,9 +1,19 @@
+import type { ArtRef } from '../art/resolve'
 import { sfx } from '../audio'
-import { Sprite } from '../components/Sprite'
+import { Portrait } from '../components/Portrait'
+import { clearHeroArt } from '../store/art'
 import { useGame } from '../store/game'
 import { useUi } from '../store/settings'
 
-const PARADE = ['fighter', 'wizard', 'rogue', 'cleric', 'slime', 'goblin', 'myconid', 'wyrmling']
+const PARADE: { sprite: string; art: ArtRef }[] = [
+  { sprite: 'fighter', art: { kind: 'class', id: 'fighter' } },
+  { sprite: 'wizard', art: { kind: 'class', id: 'wizard' } },
+  { sprite: 'rogue', art: { kind: 'class', id: 'rogue' } },
+  { sprite: 'cleric', art: { kind: 'class', id: 'cleric' } },
+  { sprite: 'slime', art: { kind: 'monster', id: 'slime' } },
+  { sprite: 'goblin', art: { kind: 'monster', id: 'goblin' } },
+  { sprite: 'wyrmling', art: { kind: 'monster', id: 'wyrmling' } },
+]
 
 export function TitleScreen() {
   const party = useGame((s) => s.party)
@@ -26,9 +36,9 @@ export function TitleScreen() {
         <p className="title-sub pixel">a D&amp;D x JRPG x visual novel desk</p>
       </div>
       <div className="title-parade" aria-hidden>
-        {PARADE.map((id, i) => (
-          <div key={id} className="parade-sprite" style={{ animationDelay: `${i * 0.15}s` }}>
-            <Sprite id={id} size={56} flip={i >= 4} />
+        {PARADE.map((p, i) => (
+          <div key={p.sprite} className="parade-sprite" style={{ animationDelay: `${i * 0.15}s` }}>
+            <Portrait art={p.art} variant="full" sprite={p.sprite} size={i < 4 ? 190 : 120} flip={i >= 4} alt="" />
           </div>
         ))}
       </div>
@@ -44,6 +54,7 @@ export function TitleScreen() {
           onClick={() => {
             if (party.length && !confirm('Start a new adventure? Your current party will be replaced (Quest Board tasks are kept).')) return
             sfx('confirm')
+            clearHeroArt()
             newGame()
           }}
         >

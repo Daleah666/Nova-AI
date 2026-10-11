@@ -31,7 +31,10 @@ export interface Character {
   xp: number
   hp: number
   mp: number
+  /** Legacy inline portrait; art now lives in the IndexedDB art library. */
   portrait?: string
+  /** Short backstory, e.g. from an imported character card. Shared with the AI DM. */
+  bio?: string
 }
 
 export type SkillTarget = 'enemy' | 'all-enemies' | 'ally' | 'all-allies' | 'self'

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { sfx } from '../audio'
 import { PartyPanel } from '../components/PartyPanel'
+import { heroRef } from '../art/resolve'
 import { Portrait } from '../components/Portrait'
 import { Sprite } from '../components/Sprite'
 import { CLASSES } from '../content/classes'
@@ -106,7 +107,7 @@ export function Overworld() {
               className={`player facing-${facing}`}
               style={{ left: `${(pos.x / MAP_W) * 100}%`, top: `${(pos.y / MAP_H) * 100}%`, width: `${100 / MAP_W}%`, height: `${100 / MAP_H}%` }}
             >
-              <Portrait image={lead.portrait} sprite={CLASSES[lead.classId].sprite} size={64} flip={facing === 'left'} alt={lead.name} className="player-sprite" />
+              <Portrait art={heroRef(lead)} customOnly sprite={CLASSES[lead.classId].sprite} size={64} flip={facing === 'left'} alt={lead.name} className="player-sprite" />
             </div>
           )}
         </div>

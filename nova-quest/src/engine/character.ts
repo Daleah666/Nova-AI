@@ -1,4 +1,4 @@
-import { withMod } from './dice'
+import { roll, withMod } from './dice'
 import { ABILITIES, abilityMod, levelForXp, proficiencyBonus, type Abilities, type Ability } from './rules'
 import type { Character, ClassDef } from './types'
 import { uid } from './rng'
@@ -37,6 +37,11 @@ export function deriveStats(c: Pick<Character, 'abilities' | 'level'>, cls: Clas
     damage: withMod(cls.weapon, atkMod),
     mods,
   }
+}
+
+/** Six 4d6-drop-lowest rolls, the classic way to roll a character. */
+export function rollScores(): number[] {
+  return Array.from({ length: 6 }, () => roll('4d6kh3').total)
 }
 
 /** Assigns sorted rolled scores to the class's preferred abilities, highest first. */

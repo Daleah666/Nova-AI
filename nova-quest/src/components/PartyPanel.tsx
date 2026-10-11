@@ -4,6 +4,7 @@ import { xpProgress } from '../engine/rules'
 import { statsOf } from '../game/party'
 import { useGame } from '../store/game'
 import { Bar } from './Bar'
+import { heroRef } from '../art/resolve'
 import { Portrait } from './Portrait'
 
 export function PartyPanel({ compact = false }: { compact?: boolean }) {
@@ -19,7 +20,7 @@ export function PartyPanel({ compact = false }: { compact?: boolean }) {
         const xp = xpProgress(c.xp)
         return (
           <div key={c.id} className={`hero-card ${c.hp <= 0 ? 'down' : ''}`}>
-            <Portrait image={c.portrait} sprite={CLASSES[c.classId].sprite} size={compact ? 40 : 52} alt={c.name} />
+            <Portrait art={heroRef(c)} sprite={CLASSES[c.classId].sprite} size={compact ? 40 : 52} alt={c.name} />
             <div className="grow col tight">
               <div className="row between">
                 <span className="pixel tiny">{c.name}</span>

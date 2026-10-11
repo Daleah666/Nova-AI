@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { heroRef, type ArtRef } from '../art/resolve'
 import { sfx } from '../audio'
 import { Bar } from '../components/Bar'
 import { Portrait } from '../components/Portrait'
 import { SKILLS } from '../content/classes'
 import { ITEMS } from '../content/items'
 import { currentActor, isPartyTurn, type BattleAction, type Combatant } from '../engine/combat'
-import type { ItemDef, SkillDef } from '../engine/types'
+import type { Character, ItemDef, SkillDef } from '../engine/types'
 import { useGame } from '../store/game'
 
 type TargetKind = 'enemy' | 'ally' | 'ally-down'
@@ -17,8 +18,14 @@ type Menu =
 
 const POPUP_KINDS = new Set(['damage', 'heal', 'miss', 'revive', 'mp'])
 
+function combatantArt(c: Combatant, party: Character[]): ArtRef {
+  const hero = c.side === 'party' ? party.find((p) => p.id === c.refId) : undefined
+  return hero ? heroRef(hero) : { kind: 'monster', id: c.refId }
+}
+
 export function BattleScreen() {
   const battle = useGame((s) => s.battle)
+  const heroes = useGame((s) => s.party)
   const battleAction = useGame((s) => s.battleAction)
   const enemyStep = useGame((s) => s.enemyStep)
   const finishBattle = useGame((s) => s.finishBattle)
@@ -124,7 +131,7 @@ export function BattleScreen() {
           const c = battle.combatants.find((x) => x.id === id)!
           return (
             <div key={id} className={`init-chip ${i === battle.turn ? 'current' : ''} ${c.hp <= 0 ? 'down' : ''} ${c.side}`} title={`${c.name} (initiative ${c.initiative})`}>
-              <Portrait image={c.portrait} sprite={c.sprite} size={28} alt={c.name} flip={c.side === 'enemy'} />
+              <Portrait art={combatantArt(c, heroes)} sprite={c.sprite} size={28} alt={c.name} flip={c.side === 'enemy'} />
             </div>
           )
         })}
@@ -139,7 +146,7 @@ export function BattleScreen() {
             disabled={!targetable(e)}
           >
             <div key={hitIds.has(e.id) ? hitKey : 'idle'} className={`enemy-sprite ${hitIds.has(e.id) ? 'shake' : ''}`}>
-              <Portrait sprite={e.sprite} size={e.refId === 'wyrmling' ? 180 : 120} alt={e.name} />
+              <Portrait art={combatantArt(e, heroes)} variant="full" sprite={e.sprite} size={e.refId === 'wyrmling' ? 220 : 150} alt={e.name} />
             </div>
             <div className="popups">{popupsFor(e.id)}</div>
             <div className="enemy-info">
@@ -230,7 +237,7 @@ export function BattleScreen() {
               disabled={!targetable(c)}
             >
               <div key={hitIds.has(c.id) ? hitKey : 'idle'} className={hitIds.has(c.id) ? 'shake' : ''}>
-                <Portrait image={c.portrait} sprite={c.sprite} size={56} alt={c.name} />
+                <Portrait art={combatantArt(c, heroes)} sprite={c.sprite} size={56} alt={c.name} />
               </div>
               <div className="popups">{popupsFor(c.id)}</div>
               <div className="col tight grow">
