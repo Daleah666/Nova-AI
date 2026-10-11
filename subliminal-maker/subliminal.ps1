@@ -65,7 +65,7 @@ function Get-MadeFolder([string]$Root) {
     return $dir
 }
 
-function Write-Log([string]$Root, [string]$Message) {
+function Add-LogLine([string]$Root, [string]$Message) {
     $path = Join-Path (Get-MadeFolder $Root) 'log.txt'
     $line = (Get-Date).ToString('yyyy-MM-dd HH:mm') + '  ' + $Message + "`r`n"
     [System.IO.File]::AppendAllText($path, $line, $script:Utf8NoBom)
@@ -127,7 +127,7 @@ function Read-Settings([string]$Root) {
                 }
             }
         } catch {
-            Write-Log $Root "settings.json could not be read, so defaults were used: $($_.Exception.Message)"
+            Add-LogLine $Root "settings.json could not be read, so defaults were used: $($_.Exception.Message)"
         }
     }
     $settings.lines = [Math]::Max(5, [int]$settings.lines)
@@ -525,7 +525,7 @@ function New-Subliminal {
         }
         if ($ai.Problem) {
             $aiProblem = $ai.Problem
-            Write-Log $Root ("$aiName skipped, phrase banks used instead: " + $aiProblem)
+            Add-LogLine $Root ("$aiName skipped, phrase banks used instead: " + $aiProblem)
         }
     }
 
@@ -573,7 +573,8 @@ function Get-VersionKey([string]$Name) {
     if ($m.Success) {
         $v = $m.Value
         if ($v -notmatch '\.') { $v += '.0' }
-        try { return [version]$v } catch { }
+        $parsed = $null
+        if ([version]::TryParse($v, [ref]$parsed)) { return $parsed }
     }
     return [version]'0.0'
 }
@@ -633,7 +634,7 @@ function Save-Subliminal {
     if ($mindzoomPath) { $where = 'Mindzoom' }
     $msg = "$Mode | spotlight: $($Result.Focus) | $($Result.Source) | $(@($Result.Lines).Count) lines | saved to $where"
     if ($problem) { $msg += " ($problem)" }
-    Write-Log $Root $msg
+    Add-LogLine $Root $msg
 
     return [pscustomobject]@{
         Lines        = @($Result.Lines)
@@ -916,18 +917,18 @@ function Enable-Daily([string]$Root) {
     try {
         Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger @($morning, $logon) -Settings $taskSettings `
             -Principal $principal -Description $description -Force -ErrorAction Stop | Out-Null
-        Write-Log $Root 'daily task turned ON (morning + login)'
+        Add-LogLine $Root 'daily task turned ON (morning + login)'
         return $true
     } catch {
         try {
             Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger @($morning) -Settings $taskSettings `
                 -Principal $principal -Description $description -Force -ErrorAction Stop | Out-Null
             Write-Host 'Windows only allowed the morning time (the at-login start needs admin), so that is what is set.' -ForegroundColor Yellow
-            Write-Log $Root 'daily task turned ON (morning only)'
+            Add-LogLine $Root 'daily task turned ON (morning only)'
             return $true
         } catch {
             Write-Host ('Windows said no to the daily task: ' + $_.Exception.Message) -ForegroundColor Red
-            Write-Log $Root ('daily task could not be turned on: ' + $_.Exception.Message)
+            Add-LogLine $Root ('daily task could not be turned on: ' + $_.Exception.Message)
             return $false
         }
     }
@@ -937,7 +938,7 @@ function Disable-Daily([string]$Root) {
     if (-not (Test-TaskSupport)) { return $false }
     if (Get-DailyTask) {
         Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false
-        Write-Log $Root 'daily task turned OFF'
+        Add-LogLine $Root 'daily task turned OFF'
     }
     return $true
 }
@@ -1097,7 +1098,7 @@ if ($Daily) {
         [void](Invoke-Make -Root $Root -Mode 'daily')
         exit 0
     } catch {
-        Write-Log $Root ("daily run failed: " + $_.Exception.Message)
+        Add-LogLine $Root ("daily run failed: " + $_.Exception.Message)
         exit 1
     }
 }
