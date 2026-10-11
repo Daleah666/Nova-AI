@@ -4,6 +4,7 @@ Writes fresh affirmations from my-goals.txt into Mindzoom's affirmations folder.
 
   subliminal.ps1            open the menu
   subliminal.ps1 -Now       make today's subliminal now
+  subliminal.ps1 -WithMe    make one together, step by step
   subliminal.ps1 -Daily     what the daily task runs: makes one only if today's is still missing
   subliminal.ps1 -Status    show what is set up
 
@@ -12,6 +13,7 @@ Keep this file plain ASCII: Windows PowerShell 5.1 reads scripts without a BOM a
 [CmdletBinding()]
 param(
     [switch]$Now,
+    [switch]$WithMe,
     [switch]$Daily,
     [switch]$Status,
     [string]$Root = $PSScriptRoot
@@ -664,6 +666,155 @@ function Invoke-Make {
     }
 }
 
+# Waits up to $Seconds for the lock so a daily run in progress never throws away your edits.
+function Wait-Lock([string]$Root, [int]$Seconds = 15) {
+    for ($i = 0; $i -lt $Seconds; $i++) {
+        $lock = Enter-Lock $Root
+        if ($null -ne $lock) { return $lock }
+        Start-Sleep -Seconds 1
+    }
+    return $null
+}
+
+# ---------- make one with me ----------
+
+# Turns the three answers into goals the engine understands, plus an "I am ..." line.
+function New-WithMeGoals([string]$Feel, [string]$More, [string]$Becoming) {
+    $goals = New-Object System.Collections.Generic.List[string]
+    $lines = New-Object System.Collections.Generic.List[string]
+    $f = ([string]$Feel).Trim().TrimEnd('.', '!')
+    if ($f) {
+        if ($f -match '^(?i)(feel|feeling)\b') { $goals.Add($f) } else { $goals.Add('Feel ' + $f) }
+    }
+    $m = ([string]$More).Trim().TrimEnd('.', '!')
+    if ($m) {
+        $first = @($m -split '\s+')[0].ToLowerInvariant()
+        if ($script:Verbs -contains $first -or $first.EndsWith('ing') -or $m -match "^(?i)(I|I'm|My)\b") { $goals.Add($m) } else { $goals.Add('Do ' + $m) }
+    }
+    $b = ([string]$Becoming).Trim().TrimEnd('.', '!')
+    if ($b) {
+        if ($b -match "^(?i)(I am|I'm|Im)\s+(.+)$") { $b = $Matches[2] }
+        $goals.Add('Be ' + $b)
+        $lines.Add('I am ' + $b + '.')
+    }
+    return [pscustomobject]@{ Goals = $goals.ToArray(); Lines = $lines.ToArray() }
+}
+
+function Get-SafeFileName([string]$Name) {
+    $n = ([string]$Name -replace '[\\/:*?"<>|]', '').Trim()
+    $n = $n -replace '\s+', ' '
+    if ($n.Length -gt 60) { $n = $n.Substring(0, 60).Trim() }
+    return $n
+}
+
+# Adds goals to the [goals] section of my-goals.txt, skipping ones already there.
+function Add-GoalsToFile([string]$Path, [string[]]$Goals) {
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($l in (Read-TextLines $Path)) { $lines.Add($l) }
+    while ($lines.Count -gt 0 -and $lines[$lines.Count - 1] -eq '') { $lines.RemoveAt($lines.Count - 1) }
+    $existing = @{}
+    foreach ($g in (Read-Goals $Path).Goals) { $existing[$g.ToLowerInvariant()] = $true }
+    $new = @($Goals | Where-Object { $_ -and -not $existing.ContainsKey($_.Trim().ToLowerInvariant()) } | ForEach-Object { $_.Trim() })
+    if ($new.Count -eq 0) { return 0 }
+
+    $header = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i].Trim().ToLowerInvariant() -eq '[goals]') { $header = $i; break } }
+    if ($header -lt 0) {
+        $lines.Add('')
+        $lines.Add('[goals]')
+        foreach ($g in $new) { $lines.Add($g) }
+    } else {
+        $next = $lines.Count
+        for ($i = $header + 1; $i -lt $lines.Count; $i++) { if ($lines[$i].Trim() -match '^\[.+\]$') { $next = $i; break } }
+        $at = $next
+        while ($at -gt $header + 1 -and $lines[$at - 1].Trim() -eq '') { $at-- }
+        $lines.InsertRange($at, [string[]]$new)
+    }
+    Write-TextLines $Path $lines.ToArray()
+    return $new.Count
+}
+
+function Show-NumberedLines($Lines) {
+    Write-Host ''
+    for ($i = 0; $i -lt $Lines.Count; $i++) { Write-Host ('{0,3}  {1}' -f ($i + 1), $Lines[$i]) }
+    Write-Host ''
+}
+
+function Invoke-WithMe([string]$Root) {
+    $settings = Read-Settings $Root
+    $goalsPath = Join-Path $Root 'my-goals.txt'
+    $goalData = Read-Goals $goalsPath
+    Write-Host ''
+    Write-Host "Let's make one together. Press Enter to skip any question." -ForegroundColor Cyan
+    $feel = Read-Host '1) How do you want to feel? (example: happy, pretty, and calm)'
+    $more = Read-Host '2) What do you want to do more of? (example: post my 3D art)'
+    $becoming = Read-Host '3) Who are you becoming? (example: a confident girly artist)'
+    $answers = New-WithMeGoals $feel $more $becoming
+    if ($answers.Goals.Count -eq 0) { Write-Host 'No answers, so nothing was made.'; return }
+
+    $data = [pscustomobject]@{ Goals = $answers.Goals; Always = @($answers.Lines) + @($goalData.Always); Never = $goalData.Never }
+    Write-Host 'Writing your lines...'
+    $result = New-Subliminal -Root $Root -Settings $settings -GoalData $data
+    if ($result.AiProblem) { Write-Host ("The AI had a problem, so the phrase banks filled in: " + $result.AiProblem) -ForegroundColor Yellow }
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($l in $result.Lines) { $lines.Add($l) }
+
+    while ($true) {
+        Show-NumberedLines $lines
+        Write-Host 'Type a number to drop that line (or a few, like 3 7 12), + and your own line to add one,'
+        Write-Host 'R for fresh lines, or just press Enter when it looks good.'
+        $answer = Read-Host '>'
+        if (-not $answer -or -not $answer.Trim()) { break }
+        if ($answer -match '^\s*\+\s*(.+)$') {
+            $lines.Add((Format-Line $Matches[1]))
+            continue
+        }
+        if ($answer -match '^\s*[rR]\s*$') {
+            $result = New-Subliminal -Root $Root -Settings $settings -GoalData $data
+            $lines.Clear()
+            foreach ($l in $result.Lines) { $lines.Add($l) }
+            continue
+        }
+        $numbers = @([regex]::Matches($answer, '\d+') | ForEach-Object { [int]$_.Value } | Where-Object { $_ -ge 1 -and $_ -le $lines.Count } | Sort-Object -Unique -Descending)
+        if ($numbers.Count -eq 0) { Write-Host 'Type a number, + and a line, R, or press Enter.' -ForegroundColor Yellow; continue }
+        foreach ($n in $numbers) { $lines.RemoveAt($n - 1) }
+    }
+    if ($lines.Count -eq 0) { Write-Host 'Every line was dropped, so nothing was saved.'; return }
+
+    Write-Host ''
+    Write-Host 'Save it as:'
+    Write-Host "  1  Today's daily subliminal (replaces today's file in Mindzoom)"
+    Write-Host '  2  Its own Mindzoom file with a name you pick'
+    $choice = Read-Host 'Pick 1 or 2 (Enter = 1)'
+    $mode = 'with me'
+    $fileName = ''
+    if ($choice -and $choice.Trim() -eq '2') {
+        $name = Get-SafeFileName (Read-Host 'Name it (example: Confident Artist)')
+        if (-not $name) { $name = 'Made With Me' }
+        $fileName = '001 ' + $name + '.txt'
+        $mode = 'custom'
+    }
+    $final = [pscustomobject]@{
+        Lines     = $lines.ToArray()
+        Focus     = $answers.Goals[0]
+        Source    = $result.Source + ', picked with you'
+        AiProblem = ''
+    }
+    $lock = Wait-Lock $Root
+    try {
+        $saved = Save-Subliminal -Root $Root -Result $final -Settings $settings -Mode $mode -FileName $fileName
+    } finally {
+        if ($null -ne $lock) { $lock.Dispose() }
+    }
+    Show-Result $saved
+
+    $keep = Read-Host 'Add your answers to my-goals.txt so the daily ones use them too? (y/N)'
+    if ($keep -match '^\s*[yY]') {
+        $added = Add-GoalsToFile $goalsPath $answers.Goals
+        Write-Host "Added $added goal(s) to my-goals.txt."
+    }
+}
+
 # ---------- screens ----------
 
 function Show-Result($Saved) {
@@ -715,4 +866,5 @@ if ($Daily) {
     }
 }
 if ($Status) { Show-Status $Root; exit 0 }
+if ($WithMe) { Invoke-WithMe $Root; exit 0 }
 Show-Result (Invoke-Make -Root $Root -Mode 'now')
