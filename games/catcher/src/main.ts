@@ -197,6 +197,9 @@ function frame(time: number): void {
 
 function sync(): void {
   app.dataset.screen = state.screen;
+  app.dataset.x = String(state.x);
+  app.dataset.y = String(state.y);
+  app.dataset.boss = state.bossBeaten ? "yes" : "no";
   titleScreen.hidden = state.screen !== "title";
   victoryScreen.hidden = state.screen !== "victory";
   playScreen.hidden = state.screen === "title" || state.screen === "victory";
