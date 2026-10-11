@@ -1,0 +1,12 @@
+{
+  "mindzoomFolder": "",
+  "dailyFileName": "000 Daily Subliminal.txt",
+  "lines": 30,
+  "maxWords": 16,
+  "dailyTime": "08:00",
+  "models": {
+    "anthropic": "claude-sonnet-5-5",
+    "xai": "grok-4-latest",
+    "openai": "gpt-5"
+  }
+}

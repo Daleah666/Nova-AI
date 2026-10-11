@@ -1,0 +1,20 @@
+# My goals. This is the only file you need to change.
+# One thing per line. Lines that start with # are notes and get skipped.
+# Save this file and the next subliminal uses your changes.
+
+[goals]
+# What you want, in plain words. Examples:
+#   Stay girly and feminine all day
+#   Feel confident posting my 3D art
+#   I am calm and focused
+# Each day one goal gets the spotlight, and every goal gets some lines.
+Stay girly and feminine all day
+Keep a happy, bubbly, confident mindset
+Create and post my 3D art
+
+[always include]
+# Your own lines. These go into every subliminal, word for word.
+I love being me.
+
+[never include]
+# Words or phrases you never want to see. Any made-up line containing one gets dropped.

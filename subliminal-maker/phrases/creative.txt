@@ -1,0 +1,27 @@
+# Theme: creating art (3D, avatars, content)
+keywords: art, artist, 3d, model, models, modeling, modelling, blender, create, creating, creative, avatar, avatars, vrchat, render, draw, drawing, paint, content, design, unity, sculpt
+
+[becoming]
+I am a talented 3D artist.
+Creating comes easily to me.
+I find joy in 3D modeling.
+My ideas flow freely.
+I finish what I start.
+I am proud of my art.
+I make something every day.
+My skills grow with every project.
+
+[why]
+Creating makes me feel alive.
+My art shows the world who I am.
+Every project makes me better.
+Sharing my art brings me joy.
+Making things is my happy place.
+
+[when]
+When I open Blender, ideas come right away.
+When I sit down to create, I focus easily.
+When I finish a piece, I post it proudly.
+When I get stuck, I take one small next step.
+When I see other art, I feel inspired.
+Every time I save a project, I feel proud.
