@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "The Hub",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Opens The Hub in every new tab and as a pop-up, opens your Hub apps as tabs and mini windows, voice and dictation for the Hub, Grok pictures with your key kept here, tidies forgotten tabs, and tracks your time (stored on this computer).",
   "icons": {
     "16": "icons/icon16.png",
@@ -19,7 +19,11 @@
   "host_permissions": [
     "http://localhost:5600/*",
     "https://*.x.ai/*",
-    "http://127.0.0.1:47800/*"
+    "http://127.0.0.1:47800/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.elevenlabs.io/*"
   ],
   "background": {
     "service_worker": "background.js"

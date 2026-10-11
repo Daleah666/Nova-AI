@@ -903,6 +903,19 @@ body.stage-mode.fam-open .quote{left:0}
 .agbub .cta{background:var(--warn); color:#1a1205; border-radius:999px; padding:6px 12px; font-weight:800; font-size:.8rem}
 .codebox{font-family:var(--f-mono); font-size:.74rem; background:rgba(0,0,0,.3); border:1px solid var(--edge); border-radius:10px; padding:8px 10px; white-space:pre-wrap; word-break:break-all; user-select:all}
 
+/* ===== v20: key vault ===== */
+.keysteps{display:grid; gap:6px; border:1px solid var(--edge); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,.03)}
+.keysteps .ks{display:flex; align-items:center; gap:10px; font-size:.84rem}
+.keysteps .ks i{width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-size:.74rem; font-weight:800; background:rgba(255,255,255,.08); color:var(--muted); flex:none}
+.keysteps .ks.done i{background:var(--ok, #7dffb3); color:#06120b}
+.keysteps .ks.now i{background:var(--accent); color:var(--accent-ink)}
+.keysteps .ks .btn{margin-left:auto}
+.smartkey{border:1px solid rgba(255,124,191,.45); background:rgba(255,124,191,.06); border-radius:14px; padding:12px; display:grid; gap:8px}
+.smartkey .det{font-size:.78rem; color:var(--muted); min-height:1.1em}
+.aicard input:disabled, .aicard button:disabled{opacity:.5; cursor:not-allowed}
+body.drawer-open:not(.chat-wide) .updbub, body.drawer-open:not(.chat-wide) .agbub{right:calc(var(--drawer) + 36px)}
+body.drawer-open.chat-wide .updbub, body.drawer-open.chat-wide .agbub{bottom:auto; top:16px; right:50%; transform:translateX(50%)}
+
 </style>
 
 <canvas id="defwall" aria-hidden="true"></canvas>
@@ -1401,7 +1414,7 @@ const APP_LINK = "https://claude.ai/artifact/9aQgcMWmM7zPBkhuhRKbWu";
 const DRIVE_FOLDER = "1GQGb9lsvFio3KjOS4q5eTvzcKp23ZPKe";
 const KEY = "momentum.v1", UIKEY = "momentum.ui", WALLKEY = "momentum.wall";
 const CAL = "Google Calendar", DRIVE = "Google Drive", GMAIL = "Gmail", WEB = "Parallel Search";
-const EXT_LATEST = "1.6.0", EXT_PKG = "ext/hub-extension.json";
+const EXT_LATEST = "1.6.1", EXT_PKG = "ext/hub-extension.json";
 const $ = s => document.getElementById(s);
 const use = n => (window.claude && window.claude.use) ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
 
@@ -2790,7 +2803,7 @@ window.addEventListener("message", e => {
     renderExtBadge(); helloExt(); renderHelpDot(); if (!$("helper").hidden) renderHelp(); return;
   }
   if (d.type === "pair-needed" || d.type === "pair-failed") { extPresent = true; extPaired = false; renderExtBadge(d.type === "pair-failed"); renderAppTabs(); return; }
-  if (d.type === "paired") { extPresent = true; extPaired = true; renderExtBadge(); renderHelpDot(); if (!$("helper").hidden) renderHelp(); if (!$("studio").hidden) stBanner(); if (extCaps.includes("grok")) stKeyStatus(); if (UI.tab === "ai") renderAI(); if (extCaps.includes("relay")) { RL.backoff = 0; relayTick(true); } return; }
+  if (d.type === "paired") { extPresent = true; extPaired = true; renderExtBadge(); renderHelpDot(); if (!$("helper").hidden) renderHelp(); if (!$("studio").hidden) stBanner(); if (extCaps.includes("grok")) stKeyStatus(); KV.status = null; if (extCaps.includes("grok") || extCaps.includes("keys")) keyStatusLoad(); if (UI.tab === "ai") renderAI(); if (extCaps.includes("relay")) { RL.backoff = 0; relayTick(true); } return; }
   if (d.type === "reply") { const p = d.payload || {}; const w = extWait[p.reqId]; if (w) { delete extWait[p.reqId]; w(p.result); } return; }
   if (d.type === "token") { const t = d.payload && typeof d.payload.token === "string" ? d.payload.token.trim().slice(0, 24) : ""; if (t) { S.extToken = t; save(); helloExt(); toast("Connected to the Hub extension."); renderHelp(); } return; }
   if (d.type === "dictation") { if (extPaired && d.payload) gotDictation(d.payload.text); return; }
@@ -4302,7 +4315,7 @@ function stRenderLeft(){
     sec("Always include", "added to every prompt", area("plus", "e.g. pink rim light, soft fur, 8k detail")),
     sec("Avoid", "negative prompt", area("neg", "e.g. extra fingers, blurry, text, watermark"), el("div", {class:"note", text:"Grok has no separate negative box, so the Hub adds these as “Avoid: …” at the end of your prompt."})));
   const g = sec("Grok", "");
-  g.append(el("div", {class:"note", text: !stReady() ? "Grok needs the Hub extension (1.5+), connected." : ST.keySet ? "Key saved in the extension. Model: " + (S.grokModel || "grok-imagine-image-2.0") : "No key yet."}),
+  g.append(el("div", {class:"note", text: !stReady() ? "Grok needs the Hub extension, connected. Robot icon → AI & keys walks you through it." : ST.keySet ? "Key saved in the extension. Model: " + (S.grokModel || "grok-imagine-image-2.0") : "No key yet. Paste it in AI & keys (robot icon)."}),
     el("button", {class:"btn sm", type:"button", style:"justify-self:start", text:"Keys & model (AI & keys)", onclick: () => { closeStudio(); openPanel("ai"); }}));
   box.append(g);
 }
@@ -4579,32 +4592,15 @@ function renderAI(){
     el("dl", {}, rows.flatMap(([k, v]) => [el("dt", {text:k}), typeof v === "string" ? el("dd", {text:v}) : el("dd", {}, v)])), ...kids);
   const link = (href, text) => el("a", {href, target:"_blank", rel:"noopener", text});
   box.append(el("div", {class:"note", text:"Every outside service the Hub uses: what it does here, where it comes from, and where its key lives."}));
-  box.append(el("h4", {class:"h4 first", text:"Keys & services"}));
-  // Grok
-  const ready = stReady(), keyed = ST.keySet === true;
-  const gk = [];
-  if (!ready) gk.push(el("div", {class:"note", text: extPresent ? "Needs Hub extension 1.5 or newer, connected. " + (cmpVer(extVersion || "1.1.0", "1.5.0") < 0 ? "Yours is " + (extVersion || "older") + ": use the Update bubble in the corner." : "Press Connect.") : "Needs the Hub extension. It keeps your key on your computer."}),
-    el("div", {class:"rowx"}, el("button", {class:"btn sm pri", type:"button", text: extPresent ? "Connect" : "Get the extension", onclick: () => extPresent ? connectExt() : helpOpen(true, "connect")})));
-  else {
-    const ki = el("input", {class:"inp", type:"password", placeholder: keyed ? "Paste a new key to replace it (xai-…)" : "Paste your key here (starts with xai-)", "aria-label":"xAI API key", autocomplete:"off"});
-    const out = el("div", {class:"note", id:"grokKeyNote"});
-    gk.push(el("div", {class:"rowx"}, ki, el("button", {class:"btn sm pri", type:"button", text:"Save key", onclick: async () => { const k = ki.value.trim(); if (!k) { ki.focus(); return; } ki.value = ""; const r = await extCall("grokKeySet", {key:k}, 8000); if (r && r.ok) { toast("Grok key saved in the extension."); await stKeyStatus(); renderAI(); } else out.textContent = (r && r.error) || "Couldn't save the key. It should start with xai-."; }})),
-      el("div", {class:"rowx"},
-        keyed ? el("button", {class:"btn sm", type:"button", text:"Test key (free)", onclick: async () => { out.textContent = "Checking with xAI…"; const r = await extCall("grokKeyTest", {}, 15000); out.textContent = r && r.ok ? "✓ Works" + (r.name ? " (" + r.name + ")" : "") + (r.blocked ? ", but xAI says it's blocked or out of credit." : ".") : r && r.error === "timeout" ? "Your extension is older and can't test keys. It still works for pictures." : (r && r.error) || "Couldn't check."; }}) : null,
-        keyed ? el("button", {class:"ghost", type:"button", text:"Remove key", onclick: async () => { await extCall("grokKeyClear", {}, 8000); toast("Grok key removed."); await stKeyStatus(); renderAI(); }}) : null),
-      out);
-    const mi = el("input", {class:"inp", value:S.grokModel || "grok-imagine-image-2.0", "aria-label":"Grok picture model"}); mi.addEventListener("change", () => { S.grokModel = mi.value.trim() || "grok-imagine-image-2.0"; save(); });
-    gk.push(el("label", {class:"field"}, el("span", {text:"Picture model"}), mi));
-  }
-  box.append(card("Grok (xAI)", !ready ? "Needs extension" : keyed ? "Key ••••" + (ST.keyLast4 || "") : "No key yet", !ready || !keyed ? "warn" : "on",
-    [["Used for", "Making and editing pictures in the Studio and in Familiar"], ["Comes from", "xAI, the company behind Grok"], ["Get a key", el("span", {}, link("https://console.x.ai", "console.x.ai"), " → API Keys → Create API key")], ["Key lives", "Inside the Hub extension on this computer. Never in the Hub, never sent to Claude."], ["Costs", "Pay per picture on your xAI account"]], ...gk));
+  box.append(el("h4", {class:"h4 first", text:"Your API keys"}));
+  renderKeyVault(box, card, link);
+  box.append(el("h4", {class:"h4", text:"Built in (no key needed)"}));
   box.append(card("Claude", aiReady ? "Built in" : "Open in Claude", aiReady ? "on" : "warn",
     [["Used for", "Chat, the agents below, Familiar's brain, sorting pictures"], ["Comes from", "Anthropic, through your Claude account"], ["Key", "None needed. It works while the Hub is open in Claude."]]));
   box.append(card("Google (Calendar, Drive, Gmail)", mcp ? "Connected" : "Open in Claude", mcp ? "on" : "warn",
     [["Used for", "Your calendar, Drive pictures and files, email search"], ["Comes from", "Google, through Claude's connectors"], ["Key", "None. Add or remove them in Claude's connector settings."]]));
   box.append(card("Web search", webSchema ? "Built in" : "Off", webSchema ? "on" : "",
     [["Used for", "Looking things up in chat and the agents"], ["Comes from", "Parallel Search, through Claude"], ["Key", "None needed"]]));
-  box.append(el("div", {class:"note", text:"Want another one, like ElevenLabs voices or OpenAI? Ask me in a chat with Claude and I'll wire it in. A key box only shows up once something here actually uses it."}));
 
   box.append(el("h4", {class:"h4", text:"Agents"}), el("div", {class:"note", text:"Helpers that only run when you press go. Each run shows in Pulse."}));
   // Plan maker
@@ -4885,6 +4881,81 @@ function renderAgSetup(box, st){
     el("div", {class:"note", text:"hub_status · board_post · board_read · board_wait · agent_settings · data_set/get/list/delete · drive_map · hub_add_todo · hub_add_note · hub_list_todos · hub_notify · calendar_list · calendar_create · drive_search · drive_save_file · gmail_search · request_status · skills_list · skills_get · skills_install · convert_setup"}),
     el("div", {class:"note", text:"Skills: Claude Code keeps them in ~/.claude/skills and Codex in ~/.agents/skills (same SKILL.md format). Agents can browse Anthropic's skills library (github.com/anthropics/skills), install from it, or copy a skill from one tool to the other. convert_setup translates a project between Claude Code and Codex (CLAUDE.md ⇄ AGENTS.md, MCP servers, skills, commands)."}),
     el("div", {class:"note", text:"Other apps (Cursor, Windsurf…): add an MCP server with command node and the path to relay\\hub-mcp.mjs. Apps that want a URL can use http://127.0.0.1:47800/mcp with the agent token from ~/.the-hub/agent-token."}));
+}
+
+
+/* ================= key vault (keys live in the extension, the Hub only sees the last 4) ================= */
+const KEYDEFS = [
+  {id:"xai", name:"Grok (xAI)", hint:"xai-…", re:/^xai-[A-Za-z0-9_-]{20,}$/, used:"Making and editing pictures in the Studio and in Familiar. Works now.", from:"xAI, the company behind Grok", url:"https://console.x.ai", path:"API Keys → Create API key", cost:"Pay per picture on your xAI account"},
+  {id:"anthropic", name:"Anthropic (Claude API)", hint:"sk-ant-…", re:/^sk-ant-[A-Za-z0-9_-]{20,}$/, used:"Saved for add-ons and agents that need their own Claude key. The Hub itself runs on your Claude account, so it doesn't need this.", from:"Anthropic", url:"https://console.anthropic.com/settings/keys", path:"Settings → API keys → Create key", cost:"Pay per use on your Anthropic Console account (separate from your Claude plan)"},
+  {id:"openai", name:"OpenAI", hint:"sk-…", re:/^sk-(?!ant-)[A-Za-z0-9_-]{20,}$/, used:"Saved for add-ons (GPT models, OpenAI images and voice). Codex signs in on its own, see the note below.", from:"OpenAI", url:"https://platform.openai.com/api-keys", path:"API keys → Create new secret key", cost:"Pay per use on your OpenAI account"},
+  {id:"gemini", name:"Google Gemini", hint:"AIza…", re:/^AIza[0-9A-Za-z_-]{30,}$/, used:"Saved for add-ons (Gemini models, Google image models).", from:"Google AI Studio", url:"https://aistudio.google.com/apikey", path:"Get API key → Create API key", cost:"Free tier, then pay per use"},
+  {id:"elevenlabs", name:"ElevenLabs", hint:"sk_…", re:/^(sk_[A-Za-z0-9]{20,}|[a-f0-9]{32})$/, used:"Saved for voices in add-ons (and Familiar later).", from:"ElevenLabs", url:"https://elevenlabs.io/app/settings/api-keys", path:"Settings → API keys → Create", cost:"Free tier, then a monthly plan"},
+];
+const KV = {status:null, loading:false, note:{}};
+function vaultReady(){ return extPaired && extCaps.includes("keys"); }
+function keyDetect(k){
+  k = String(k || "").trim(); if (!k) return null;
+  if (/^hub-[a-f0-9]{40}$/.test(k)) return {id:"relay", name:"Agent relay code"};
+  return KEYDEFS.find(d => d.re.test(k)) || null;
+}
+async function keyStatusLoad(){
+  if (KV.loading) return; KV.loading = true;
+  try {
+    if (vaultReady()) KV.status = await extCall("keyStatus", {}, 8000);
+    else if (stReady()) { const r = await extCall("grokKeyStatus", {}, 8000); KV.status = {xai: {set: !!(r && r.set), last4: (r && r.last4) || ""}}; }
+    else KV.status = null;
+    if (KV.status && KV.status.xai) { ST.keySet = !!KV.status.xai.set; ST.keyLast4 = KV.status.xai.last4 || ""; }
+  } catch (e) {}
+  KV.loading = false; if (UI.tab === "ai") renderAI();
+}
+async function keySave(id, key){
+  key = String(key || "").trim();
+  if (id === "relay") { const r = await extCall("relayCodeSet", {code:key}, 10000); if (!r || r.error) throw new Error((r && r.error) || "Couldn't save the relay code."); toast(r.online ? "Relay connected." : "Relay code saved. Start an agent or START-RELAY.bat."); RL.backoff = 0; await relayCheck(); return; }
+  const d = KEYDEFS.find(x => x.id === id); if (!d) throw new Error("Unknown key.");
+  if (!d.re.test(key)) throw new Error("That doesn't look like a " + d.name + " key (it should start with " + d.hint.replace("…", "") + ").");
+  let r;
+  if (vaultReady()) r = await extCall("keySet", {provider:id, key}, 8000);
+  else if (id === "xai" && stReady()) r = await extCall("grokKeySet", {key}, 8000);
+  else throw new Error(id === "xai" ? "Connect the Hub extension first (step 2 above)." : "Saving this key needs Hub extension 1.6.1. Use the Update bubble, then come back.");
+  if (!r || r.error || !r.ok) throw new Error((r && r.error) || "Couldn't save the key.");
+  toast(d.name + " key saved in the extension."); await keyStatusLoad(); if (id === "xai") stKeyStatus();
+}
+function renderKeyVault(box, card, link){
+  const ver = extVersion || "", newEnough = extPresent && cmpVer(ver || "1.1.0", "1.6.1") >= 0, ready = vaultReady(), anyReady = ready || stReady();
+  if (KV.status === null && anyReady && !KV.loading) keyStatusLoad();
+  // 1-2-3 so it's obvious why a box is greyed out
+  const steps = el("div", {class:"keysteps"});
+  const step = (n, done, now, text, btn) => el("div", {class:"ks" + (done ? " done" : now ? " now" : "")}, el("i", {text: done ? "✓" : String(n)}), el("span", {text}), btn || null);
+  steps.append(
+    step(1, newEnough, !newEnough, newEnough ? "Hub extension " + ver + " installed" : extPresent ? "Update the Hub extension (you have " + (ver || "an older one") + ", need 1.6.1)" : "Install the Hub extension (it keeps your keys on your computer)",
+      newEnough ? null : el("button", {class:"btn sm pri", type:"button", text: extPresent ? "Update" : "How", onclick: () => extPresent && !$("updBub").hidden ? updGo() : helpOpen(true, "connect")})),
+    step(2, extPaired, newEnough && !extPaired, extPaired ? "Connected to this Hub" : "Connect the extension to this Hub", extPaired || !extPresent ? null : el("button", {class:"btn sm pri", type:"button", text:"Connect", onclick: connectExt})),
+    step(3, !!(KV.status && Object.values(KV.status).some(x => x && x.set)), ready, "Paste your keys below"));
+  box.append(steps);
+  // one box for any key: it figures out which service it belongs to
+  const sk = el("input", {class:"inp", type:"password", placeholder:"Paste any API key here (xai-…, sk-ant-…, sk-…, AIza…, sk_…, or the hub- relay code)", "aria-label":"Paste any API key", autocomplete:"off"});
+  const det = el("div", {class:"det"}), go = el("button", {class:"btn sm pri", type:"button", text:"Save key", disabled:""});
+  sk.addEventListener("input", () => { const d = keyDetect(sk.value); det.textContent = !sk.value.trim() ? "" : d ? "Looks like: " + d.name : "I don't recognize that kind of key. Check you copied all of it."; go.disabled = !d; });
+  go.addEventListener("click", async () => { const d = keyDetect(sk.value); if (!d) return; go.disabled = true; try { await keySave(d.id, sk.value); sk.value = ""; det.textContent = "✓ Saved " + d.name + "."; } catch (e) { det.textContent = e.message; go.disabled = false; } });
+  sk.addEventListener("keydown", e => { if (e.key === "Enter" && !go.disabled) go.click(); });
+  box.append(el("div", {class:"smartkey"}, el("b", {text:"🔑 Paste a key"}), el("div", {class:"rowx"}, sk, go), det,
+    el("div", {class:"note", style:"font-size:.72rem", text: anyReady ? "Keys are stored inside the Hub extension on this computer. The Hub only ever sees the last 4 characters, and they're never sent to Claude." : "The box works once steps 1 and 2 above are done. Keys are stored inside the extension, never in the Hub."})));
+  // one card per service
+  KEYDEFS.forEach(d => {
+    const st = KV.status && KV.status[d.id], set = !!(st && st.set), canSave = ready || (d.id === "xai" && stReady());
+    const ki = el("input", {class:"inp", type:"password", placeholder: set ? "Paste a new key to replace it" : "Paste your " + d.hint + " key", "aria-label":d.name + " API key", autocomplete:"off", disabled: canSave ? null : ""});
+    const out = el("div", {class:"note"}); if (KV.note[d.id]) out.textContent = KV.note[d.id];
+    const kids = [el("div", {class:"rowx"}, ki, el("button", {class:"btn sm pri", type:"button", text:"Save", disabled: canSave ? null : "", title: canSave ? "" : "Finish steps 1 and 2 first", onclick: async () => { try { await keySave(d.id, ki.value); ki.value = ""; KV.note[d.id] = ""; } catch (e) { out.textContent = e.message; } }})),
+      set ? el("div", {class:"rowx"},
+        el("button", {class:"btn sm", type:"button", text:"Test key (free)", onclick: async () => { out.textContent = "Checking…"; const r = ready ? await extCall("keyTest", {provider:d.id}, 16000) : await extCall("grokKeyTest", {}, 16000); KV.note[d.id] = out.textContent = r && r.ok ? "✓ Works." + (r.blocked ? " But xAI says it's blocked or out of credit." : "") : (r && r.error === "timeout") ? "Your extension is too old to test keys. Update it." : (r && r.error) || "Couldn't check."; }}),
+        el("button", {class:"ghost", type:"button", text:"Remove", onclick: async () => { const r = ready ? await extCall("keyClear", {provider:d.id}, 8000) : await extCall("grokKeyClear", {}, 8000); if (r && r.ok) { toast(d.name + " key removed."); await keyStatusLoad(); if (d.id === "xai") stKeyStatus(); } }})) : null,
+      out];
+    if (d.id === "xai" && canSave) { const mi = el("input", {class:"inp", value:S.grokModel || "grok-imagine-image-2.0", "aria-label":"Grok picture model"}); mi.addEventListener("change", () => { S.grokModel = mi.value.trim() || "grok-imagine-image-2.0"; save(); }); kids.push(el("label", {class:"field"}, el("span", {text:"Picture model"}), mi)); }
+    if (d.id === "openai") kids.push(el("div", {class:"note", style:"font-size:.72rem", text:"Codex asking for a key? Codex keeps its own login: in a terminal run  codex login  and pick “Sign in with ChatGPT” (uses your ChatGPT plan), or run  codex login --with-api-key  and paste this same sk- key there."}));
+    box.append(card(d.name, set ? "Key ••••" + st.last4 : canSave ? "No key yet" : "Locked", set ? "on" : "warn",
+      [["Used for", d.used], ["Comes from", d.from], ["Get a key", el("span", {}, link(d.url, d.url.replace(/^https:\/\//, "").split("/")[0]), " → " + d.path)], ["Costs", d.cost], ["Key lives", "Inside the Hub extension on this computer"]], ...kids));
+  });
 }
 
 /* ================= boot ================= */

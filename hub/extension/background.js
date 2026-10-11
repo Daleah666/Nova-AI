@@ -216,6 +216,32 @@ async function relayCall(m) {
   } catch (e) { return { error: "offline" }; }
 }
 
+// Key vault: your API keys live only here, in this extension's storage on your computer.
+// The Hub can save, test and remove them, and only ever sees the last 4 characters.
+const VAULT = {
+  xai:        { store: "xaiKey",        ok: (k) => /^xai-[A-Za-z0-9_-]{20,}$/.test(k), name: "xAI (Grok)" },
+  anthropic:  { store: "anthropicKey",  ok: (k) => /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k), name: "Anthropic (Claude)" },
+  openai:     { store: "openaiKey",     ok: (k) => /^sk-(?!ant-)[A-Za-z0-9_-]{20,}$/.test(k), name: "OpenAI" },
+  gemini:     { store: "geminiKey",     ok: (k) => /^AIza[0-9A-Za-z_-]{30,}$/.test(k), name: "Google Gemini" },
+  elevenlabs: { store: "elevenlabsKey", ok: (k) => /^(sk_[A-Za-z0-9]{20,}|[a-f0-9]{32})$/.test(k), name: "ElevenLabs" },
+};
+async function vaultGet(p) { const v = VAULT[p]; if (!v) return ""; const o = await chrome.storage.local.get(v.store); return typeof o[v.store] === "string" ? o[v.store] : ""; }
+async function vaultTest(p) {
+  const k = await vaultGet(p); if (!k) return { ok: false, error: "nokey" };
+  const req = {
+    xai: [XAI + "/api-key", { headers: { Authorization: "Bearer " + k } }],
+    anthropic: ["https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": k, "anthropic-version": "2023-06-01" } }],
+    openai: ["https://api.openai.com/v1/models", { headers: { Authorization: "Bearer " + k } }],
+    gemini: ["https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", { headers: { "x-goog-api-key": k } }],
+    elevenlabs: ["https://api.elevenlabs.io/v1/user", { headers: { "xi-api-key": k } }],
+  }[p];
+  try {
+    const r = await fetch(req[0], { ...req[1], signal: AbortSignal.timeout(12000) });
+    if (r.ok) return { ok: true };
+    return { ok: false, error: (r.status === 401 || r.status === 403 ? "This key doesn't work (" : "The service said no (") + r.status + ")." };
+  } catch (e) { return { ok: false, error: "Couldn't reach " + VAULT[p].name + ". Check your internet." }; }
+}
+
 // Voice: the Talk window sends what you said here; pass it to an open Hub, or open the Hub and hand it over.
 async function hubTabsOpen() { return (await chrome.tabs.query({})).filter((t) => (t.url || "").startsWith(HUB)); }
 async function deliverVoice(text) {
@@ -357,6 +383,15 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         return { ok: true, name: typeof j.name === "string" ? j.name.slice(0, 60) : "", blocked: !!(j.api_key_blocked || j.api_key_disabled || j.team_blocked) };
       } catch (e) { return { ok: false, error: "Couldn't reach xAI. Check your internet." }; }
     }
+    if (msg.type === "keyStatus") { const out = {}; for (const p of Object.keys(VAULT)) { const k = await vaultGet(p); out[p] = { set: !!k, last4: k ? k.slice(-4) : "" }; } return out; }
+    if (msg.type === "keySet") {
+      const p = String(msg.provider || ""), k = String(msg.key || "").trim(); const v = VAULT[p];
+      if (!v) return { error: "Unknown service." };
+      if (!v.ok(k)) return { error: "That doesn't look like " + (/^[AEIOU]/.test(v.name) ? "an " : "a ") + v.name + " key." };
+      await chrome.storage.local.set({ [v.store]: k }); return { ok: true, last4: k.slice(-4) };
+    }
+    if (msg.type === "keyClear") { const v = VAULT[String(msg.provider || "")]; if (!v) return { error: "Unknown service." }; await chrome.storage.local.remove(v.store); return { ok: true }; }
+    if (msg.type === "keyTest") { if (!VAULT[String(msg.provider || "")]) return { error: "Unknown service." }; return vaultTest(String(msg.provider)); }
     if (msg.type === "relayCodeSet") {
       const code = String(msg.code || "").trim(); if (!/^hub-[a-f0-9]{40}$/.test(code)) return { error: "That doesn't look like a relay code. It starts with hub- and is shown in the relay window." };
       await chrome.storage.local.set({ relayCode: code });

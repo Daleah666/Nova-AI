@@ -1,11 +1,11 @@
 {
   "artifact": "https://claude.ai/artifact/9aQgcMWmM7zPBkhuhRKbWu",
   "title": "My Hub",
-  "version": "1791668451-c7c0",
-  "seq": 19,
+  "version": "1791680504-3812",
+  "seq": 20,
   "extension": {
-    "version": "1.6.0",
-    "filename": "The-Hub-extension-1.6.zip"
+    "version": "1.6.1",
+    "filename": "The-Hub-extension-1.6.1.zip"
   },
   "files": [
     {
@@ -15,13 +15,13 @@
     },
     {
       "path": "ext/hub-extension.json",
-      "size": 68411,
-      "sha256": "6aab98b8a1d81757711763b80ee3936048c39340ea9fae2485c99f1855ce0bd9"
+      "size": 69393,
+      "sha256": "be4a0906a941f1aa36985114ec99d21d6561b7228f2d55456ce1a486512d52a9"
     },
     {
       "path": "index.html",
-      "size": 479899,
-      "sha256": "3738d94e99c290fa2ffce0a3590807f6928f02f3c1211be71ff2af2522153d72"
+      "size": 487562,
+      "sha256": "7fc15ea216b2a6a7d637b892aba7036a2f0d9cd08a4a25b53606e21fc8c321ca"
     }
   ]
 }
