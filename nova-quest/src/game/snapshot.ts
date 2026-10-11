@@ -21,6 +21,7 @@ export function partySnapshot(s: Pick<GameData, 'party' | 'gold' | 'inventory' |
         attack: `${CLASSES[c.classId].weaponName} +${st.attackBonus} (${st.damage})`,
         ability_modifiers: st.mods,
         skills: CLASSES[c.classId].skills.map((id) => SKILLS[id].name),
+        ...(c.bio ? { bio: c.bio.length > 300 ? `${c.bio.slice(0, 300)}...` : c.bio } : {}),
       }
     }),
     gold: s.gold,

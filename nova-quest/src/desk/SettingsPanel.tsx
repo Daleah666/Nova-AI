@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { sfx } from '../audio'
+import { clearHeroArt, importArtLibrary, withArtLibrary } from '../store/art'
 import { savedSize, useGame } from '../store/game'
 import { useSettings } from '../store/settings'
 import { downloadText } from '../util/image'
@@ -117,7 +118,7 @@ function SaveSection() {
 
   const onExport = () => {
     const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
-    downloadText(`nova-quest-save-${stamp}.json`, exportSave())
+    downloadText(`nova-quest-save-${stamp}.json`, withArtLibrary(exportSave()))
     sfx('confirm')
   }
 
@@ -125,7 +126,9 @@ function SaveSection() {
     if (!file) return
     setError('')
     try {
-      importSave(await file.text())
+      const text = await file.text()
+      importSave(text)
+      importArtLibrary(text)
       sfx('levelup')
     } catch (e) {
       setError((e as Error).message)
@@ -139,7 +142,8 @@ function SaveSection() {
       <h3>Save data</h3>
       <p className="muted">
         Autosaves to this browser after every action ({formatBytes(savedBytes)} used). Export a file to back up your party, quests,
-        journal, and art, or to move them to another device.
+        journal, and custom art, or to move them to another device. Wiping keeps your art library for characters, classes, and
+        monsters.
       </p>
       <div className="row wrap">
         <button className="btn small" onClick={onExport} disabled={partySize === 0}>
@@ -162,6 +166,7 @@ function SaveSection() {
               className="btn small danger"
               onClick={() => {
                 wipeSave()
+                clearHeroArt()
                 setConfirmWipe(false)
                 sfx('defeat')
               }}

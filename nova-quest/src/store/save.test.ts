@@ -44,3 +44,19 @@ describe('save export/import', () => {
     expect(parseSave(JSON.stringify({ game: 'nova-quest', data: { party: [], screen: 'world' } })).screen).toBe('title')
   })
 })
+
+describe('recruitHero', () => {
+  it('joins at the party average XP and refuses a fifth hero', () => {
+    const g = useGame.getState()
+    g.beginAdventure([hero(), hero()])
+    g.grantPartyXp(300, 'test')
+    expect(useGame.getState().recruitHero({ ...hero(), name: 'Clover' })).toBe(true)
+    const clover = useGame.getState().party[2]
+    expect(clover.name).toBe('Clover')
+    expect(clover.xp).toBe(300)
+    expect(clover.level).toBe(2)
+    expect(useGame.getState().recruitHero(hero())).toBe(true)
+    expect(useGame.getState().recruitHero(hero())).toBe(false)
+    expect(useGame.getState().party).toHaveLength(4)
+  })
+})

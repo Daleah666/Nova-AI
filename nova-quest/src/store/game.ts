@@ -80,6 +80,7 @@ export interface GameData {
   quests: Quest[]
   journal: JournalEntry[]
   dm: ChatMessage[]
+  /** Legacy: older saves kept NPC art here; it is migrated into the art library on load. */
   npcArt: Record<string, string>
   focusSessions: number
 }
@@ -112,8 +113,8 @@ interface GameActions {
   log: (kind: JournalKind, text: string) => void
   addDm: (role: ChatMessage['role'], content: string) => void
   clearDm: () => void
-  setPortrait: (characterId: string, dataUrl: string | undefined) => void
-  setNpcArt: (npcId: string, dataUrl: string | undefined) => void
+  /** Adds a hero mid-adventure at the party's average XP. Returns false when the party is full. */
+  recruitHero: (hero: Character) => boolean
   exportSave: () => string
   importSave: (json: string) => void
   wipeSave: () => void
@@ -129,6 +130,7 @@ export type GameStore = GameData & GameActions & Ephemeral
 
 export const COMBAT_DEFS: CombatDefs = { skills: SKILLS, items: ITEMS }
 
+export const MAX_PARTY = 4
 const MAX_JOURNAL = 300
 const MAX_DM = 120
 
@@ -268,7 +270,7 @@ export const useGame = create<GameStore>()(
         dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
         log,
 
-        newGame: () => set({ ...freshData(), screen: 'create', quests: get().quests, npcArt: get().npcArt }),
+        newGame: () => set({ ...freshData(), screen: 'create', quests: get().quests }),
 
         beginAdventure: (party) => {
           set({ party, gold: 25, inventory: { potion: 1 }, flags: {}, pos: { ...START_POS }, facing: 'down' })
@@ -497,16 +499,16 @@ export const useGame = create<GameStore>()(
           set((s) => ({ dm: [...s.dm, { id: uid('m'), role, content, at: Date.now() }].slice(-MAX_DM) })),
         clearDm: () => set({ dm: [] }),
 
-        setPortrait: (characterId, dataUrl) =>
-          set((s) => ({ party: s.party.map((c) => (c.id === characterId ? { ...c, portrait: dataUrl } : c)) })),
-
-        setNpcArt: (npcId, dataUrl) =>
-          set((s) => {
-            const npcArt = { ...s.npcArt }
-            if (dataUrl) npcArt[npcId] = dataUrl
-            else delete npcArt[npcId]
-            return { npcArt }
-          }),
+        recruitHero: (hero) => {
+          const party = get().party
+          if (party.length >= MAX_PARTY) return false
+          const avgXp = party.length ? Math.round(party.reduce((n, c) => n + c.xp, 0) / party.length) : 0
+          const joined = longRest(grantXp(hero, CLASSES[hero.classId], avgXp).character, CLASSES[hero.classId])
+          set({ party: [...party, joined] })
+          log('story', `${joined.name} the ${CLASSES[joined.classId].name} joins the party at level ${joined.level}.`)
+          notify(`${joined.name} joined the party!`, 'reward')
+          return true
+        },
 
         exportSave: () => JSON.stringify({ game: 'nova-quest', savedAt: new Date().toISOString(), data: pickData(get()) }, null, 2),
 
