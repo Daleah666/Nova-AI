@@ -153,8 +153,8 @@ export function startBattle(
     nextEventId: 1,
     actionSeq: 0,
   }
-  const names = enemies.length === 1 ? enemies[0].name : `${enemies.length} foes`
-  state = pushEvent(state, { kind: 'info', text: `${names} appear! Roll for initiative!` })
+  const intro = enemies.length === 1 ? `A ${enemies[0].name} appears!` : `${enemies.length} foes appear!`
+  state = pushEvent(state, { kind: 'info', text: `${intro} Roll for initiative!` })
   const first = state.combatants.find((c) => c.id === order[0])
   if (first && first.hp <= 0) state = advanceTurn(state)
   return state

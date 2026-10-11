@@ -28,6 +28,7 @@
   position: relative;
   overflow: hidden;
   transition: margin-right 250ms ease;
+  container-type: inline-size;
 }
 .app.desk-open .stage {
   margin-right: min(440px, 100vw);
@@ -216,7 +217,7 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
   gap: 16px;
 }
-@media (max-width: 860px) {
+@container (max-width: 860px) {
   .create-grid {
     grid-template-columns: 1fr;
   }
@@ -300,10 +301,14 @@
   gap: 12px;
   padding: 12px;
 }
-@media (max-width: 960px) {
+@container (max-width: 900px) {
   .world-screen {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
     overflow: auto;
+  }
+  .world-side {
+    overflow: visible;
   }
 }
 .map-frame {
@@ -650,14 +655,17 @@
   stroke-width: 3;
 }
 .die-facet {
-  fill: #1c2775;
-  stroke: rgba(255, 255, 255, 0.6);
+  fill: rgba(28, 39, 117, 0.45);
+  stroke: rgba(255, 255, 255, 0.35);
   stroke-width: 1.5;
 }
 .die-text {
   font-family: var(--font-pixel);
-  font-size: 18px;
+  font-size: 20px;
   fill: #fff;
+  stroke: #050826;
+  stroke-width: 5px;
+  paint-order: stroke;
 }
 .die-rolling {
   animation: spin 0.25s linear infinite;
@@ -894,8 +902,10 @@
 }
 .battle-log {
   padding: 6px 12px;
-  min-height: 96px;
+  height: 112px;
+  overflow: hidden;
   font-size: 19px;
+  flex-shrink: 0;
 }
 .log-line {
   white-space: nowrap;
@@ -914,7 +924,7 @@
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 10px;
 }
-@media (max-width: 800px) {
+@container (max-width: 760px) {
   .battle-bottom {
     grid-template-columns: 1fr;
   }
@@ -940,6 +950,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
+  align-self: end;
 }
 .status-card {
   position: relative;

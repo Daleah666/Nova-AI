@@ -56,6 +56,12 @@ describe('roll', () => {
     expect(dis.total).toBe(6)
   })
 
+  it('ignores advantage when there is no single d20 to apply it to', () => {
+    const r = roll('2d6', { mode: 'advantage', rng: facesRng([[3, 6], [4, 6]]) })
+    expect(r.mode).toBe('normal')
+    expect(r.total).toBe(7)
+  })
+
   it('critical damage doubles the dice but not the modifier', () => {
     const r = roll('1d8+3', { critical: true, rng: facesRng([[5, 8], [7, 8]]) })
     expect(r.dice[0].rolls).toHaveLength(2)

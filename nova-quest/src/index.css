@@ -103,7 +103,7 @@ h3 {
 }
 .btn:hover:not(:disabled)::before,
 .btn:focus-visible::before {
-  content: '\25B6\00a0';
+  content: '\25B6\00a0' / '';
   color: var(--gold);
 }
 .btn:active:not(:disabled) {

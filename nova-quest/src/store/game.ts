@@ -396,17 +396,18 @@ export const useGame = create<GameStore>()(
 
         grantPartyXp: (amount, reason) => {
           if (amount <= 0) return
-          const leveled: string[] = []
+          const leveled: Character[] = []
           const party = get().party.map((c) => {
             const r = grantXp(c, CLASSES[c.classId], amount)
-            if (r.leveledUp) leveled.push(`${c.name} reached level ${r.character.level}!`)
+            if (r.leveledUp) leveled.push(r.character)
             return r.character
           })
           set({ party })
           notify(`+${amount} XP (${reason})`, 'reward')
-          for (const msg of leveled) {
-            log('level', msg)
-            notify(`LEVEL UP! ${msg}`, 'level')
+          for (const c of leveled) log('level', `${c.name} reached level ${c.level}!`)
+          if (leveled.length) {
+            const names = leveled.map((c) => `${c.name} (Lv${c.level})`).join(', ')
+            notify(`LEVEL UP! ${names}`, 'level')
           }
         },
 

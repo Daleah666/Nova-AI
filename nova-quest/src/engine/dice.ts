@@ -110,10 +110,12 @@ export function rollDie(sides: number, rng: Rng = defaultRng): number {
 export function roll(notation: string, opts: RollOptions = {}): RollResult {
   const { mode = 'normal', critical = false, rng = defaultRng } = opts
   let terms = parseDice(notation)
+  let appliedMode: RollMode = 'normal'
 
   if (mode !== 'normal') {
     const idx = terms.findIndex((t) => t.kind === 'dice' && t.count === 1 && t.sides === 20 && !t.keep)
     if (idx >= 0) {
+      appliedMode = mode
       terms = terms.map((t, j) =>
         j === idx ? { ...(t as DiceTerm), count: 2, keep: { highest: mode === 'advantage', n: 1 } } : t,
       )
@@ -146,7 +148,7 @@ export function roll(notation: string, opts: RollOptions = {}): RollResult {
 
   return {
     notation,
-    mode,
+    mode: appliedMode,
     critical,
     dice,
     modifier,
