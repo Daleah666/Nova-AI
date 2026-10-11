@@ -175,7 +175,7 @@ export function formatRoll(r: RollResult): string {
   const mod = r.modifier ? ` ${r.modifier > 0 ? '+' : '-'} ${Math.abs(r.modifier)}` : ''
   const tags = [
     r.mode !== 'normal' ? r.mode : '',
-    r.critical ? 'crit dice' : '',
+    r.critical ? 'crit: dice doubled' : '',
     r.crit ? 'NAT 20' : '',
     r.fumble ? 'NAT 1' : '',
   ].filter(Boolean)

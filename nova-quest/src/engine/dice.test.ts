@@ -80,6 +80,8 @@ describe('roll', () => {
   it('formats a readable breakdown', () => {
     const r = roll('1d20+5', { mode: 'advantage', rng: facesRng([[3, 20], [20, 20]]) })
     expect(formatRoll(r)).toBe('1d20+5: [20 | dropped 3] + 5 = 25 (advantage, NAT 20)')
+    const crit = roll('1d6+2', { critical: true, rng: facesRng([[5, 6], [2, 6]]) })
+    expect(formatRoll(crit)).toBe('1d6+2: [5, 2] + 2 = 9 (crit: dice doubled)')
   })
 
   it('withMod appends signed modifiers', () => {
