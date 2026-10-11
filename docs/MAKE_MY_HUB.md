@@ -107,6 +107,23 @@ To start only the relay: `npm run relay`
 
 Everything in `hub/` is overwritten by each sync. Change the hub in Claude, not here. The scripts and `.env` are outside `hub/`, so a sync leaves them alone.
 
+## Silent Ideas
+
+Silent Ideas is a separate page from My Hub. It stays in [`studio/`](../studio), so `npm run sync-hub` does not touch it.
+
+```bash
+npm run studio
+```
+
+Open http://127.0.0.1:5173 . Hub can keep running on port 8080.
+
+1. Read the light warning and continue.
+2. The **Silent Ideas** list is already loaded. Edit the lines, or use **Import .txt** (one idea per line; lines that start with `#` are notes).
+3. Press **Start session**. A still and the current line cycle slowly. **Silent** keeps the voice very quiet under a noise bed.
+4. Press **STOP** (or Escape) when you are done. Nothing plays before Start, and Stop stays on screen.
+
+Optional Cartesia or Google Drive keys go in `studio/.env`, copied from `studio/.env.example`. The page still runs without them.
+
 ## Rule
 
 Do not paste API keys, passwords, or signed-in chats into this repo. Those stay locked on Claude and only show when you are signed in.

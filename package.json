@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-hub.mjs",
+    "studio": "node scripts/run-studio.mjs",
     "relay": "node hub/extension/relay/hub-mcp.mjs --serve",
     "sync-hub": "node scripts/sync-hub.mjs"
   },
