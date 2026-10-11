@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node scripts/dev-hub.mjs",
+    "relay": "node hub/extension/relay/hub-mcp.mjs --serve",
     "sync-hub": "node scripts/sync-hub.mjs"
   },
   "devDependencies": {
