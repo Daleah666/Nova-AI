@@ -360,6 +360,121 @@ function New-OfflineLines {
     return , $out
 }
 
+# ---------- optional AI ----------
+
+$script:ProviderNames = @{ anthropic = 'Claude'; xai = 'Grok'; openai = 'OpenAI' }
+
+function Get-KeyProvider([string]$Key) {
+    if ($Key.StartsWith('sk-ant-')) { return 'anthropic' }
+    if ($Key.StartsWith('xai-')) { return 'xai' }
+    if ($Key.StartsWith('sk-')) { return 'openai' }
+    return ''
+}
+
+function Get-AiKey([string]$Root) {
+    $key = ''
+    foreach ($line in (Read-TextLines (Join-Path $Root 'my-key.txt'))) {
+        $t = $line.Trim()
+        if ($t -and -not $t.StartsWith('#')) { $key = $t; break }
+    }
+    if (-not $key) {
+        foreach ($name in @('ANTHROPIC_API_KEY', 'XAI_API_KEY', 'OPENAI_API_KEY')) {
+            $v = [Environment]::GetEnvironmentVariable($name)
+            if ($v) { $key = $v.Trim(); break }
+        }
+    }
+    if (-not $key) { return $null }
+    return [pscustomobject]@{ Key = $key; Provider = (Get-KeyProvider $key) }
+}
+
+function New-AiPrompt($Goals, [string]$Focus, [string[]]$Never, [int]$Count, [int]$MaxWords) {
+    $system = @(
+        "You write personal affirmations for the user's own subliminal player. The user picked these goals for themself.",
+        'Rules for every line:',
+        '- First person, present tense, as if it is already true.',
+        "- Positive wording only. Avoid these words: not, never, no, stop, will, want to, and contractions like don't or can't.",
+        "- One idea per line, at most $MaxWords words, plain words, no emojis, no numbering.",
+        '- Mix three kinds of lines: who I am becoming; why I care; when-then triggers like "When X happens, I do Y".',
+        '- Mindset, habits, confidence, and feelings only. No health or medical claims.',
+        'Reply with only a JSON array of strings.'
+    ) -join "`n"
+    $user = New-Object System.Collections.Generic.List[string]
+    $user.Add('My goals:')
+    foreach ($g in @($Goals)) { $user.Add('- ' + $g) }
+    if ($Focus) { $user.Add("Today's spotlight goal (give it about half the lines): $Focus") }
+    if (@($Never).Count -gt 0) { $user.Add('Never use these words or phrases: ' + (@($Never) -join ', ')) }
+    $user.Add("Write $Count lines.")
+    return [pscustomobject]@{ System = $system; User = ($user -join "`n") }
+}
+
+function Invoke-AiRequest($AiKey, $Settings, [string]$System, [string]$User) {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $provider = $AiKey.Provider
+    $model = [string]$Settings.models.$provider
+    if ($provider -eq 'anthropic') {
+        $uri = 'https://api.anthropic.com/v1/messages'
+        $headers = @{ 'x-api-key' = $AiKey.Key; 'anthropic-version' = '2023-06-01' }
+        $body = @{ model = $model; max_tokens = 2000; system = $System; messages = @(@{ role = 'user'; content = $User }) }
+    } else {
+        $base = 'https://api.openai.com'
+        if ($provider -eq 'xai') { $base = 'https://api.x.ai' }
+        $uri = $base + '/v1/chat/completions'
+        $headers = @{ Authorization = 'Bearer ' + $AiKey.Key }
+        $body = @{ model = $model; messages = @(@{ role = 'system'; content = $System }, @{ role = 'user'; content = $User }) }
+    }
+    # Windows PowerShell 5.1 sends string bodies as Latin-1, so send UTF-8 bytes.
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes(($body | ConvertTo-Json -Depth 6))
+    $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $bytes -ContentType 'application/json; charset=utf-8' -TimeoutSec 90
+    if ($provider -eq 'anthropic') {
+        return (@($response.content) | Where-Object { $_.type -eq 'text' } | ForEach-Object { $_.text }) -join "`n"
+    }
+    return [string]$response.choices[0].message.content
+}
+
+# Only a JSON list counts. Anything else (like a refusal) gives no lines.
+function ConvertFrom-AiText([string]$Text) {
+    if (-not $Text) { return @() }
+    $start = $Text.IndexOf('[')
+    $end = $Text.LastIndexOf(']')
+    if ($start -lt 0 -or $end -le $start) { return @() }
+    try {
+        $items = $Text.Substring($start, $end - $start + 1) | ConvertFrom-Json
+        return @($items | ForEach-Object { [string]$_ })
+    } catch {
+        return @()
+    }
+}
+
+function Get-ErrorText($ErrorRecord) {
+    $text = $ErrorRecord.Exception.Message
+    if ($ErrorRecord.ErrorDetails -and $ErrorRecord.ErrorDetails.Message) { $text += ' ' + $ErrorRecord.ErrorDetails.Message }
+    $text = $text -replace '\s+', ' '
+    if ($text.Length -gt 300) { $text = $text.Substring(0, 300) }
+    return $text
+}
+
+# One attempt only. Any failure returns no lines plus a reason, and the phrase banks fill in.
+function Get-AiLines {
+    param([string]$Root, $Settings, $GoalData, [string]$Focus, [int]$Count)
+    $result = [pscustomobject]@{ Lines = @(); Provider = ''; Problem = '' }
+    $ai = Get-AiKey $Root
+    if ($null -eq $ai) { return $result }
+    $result.Provider = $ai.Provider
+    if (-not $ai.Provider) {
+        $result.Problem = 'the key in my-key.txt should start with sk-ant- (Claude), xai- (Grok), or sk- (OpenAI)'
+        return $result
+    }
+    $prompt = New-AiPrompt $GoalData.Goals $Focus $GoalData.Never $Count $Settings.maxWords
+    try {
+        $text = Invoke-AiRequest $ai $Settings $prompt.System $prompt.User
+        $result.Lines = @(ConvertFrom-AiText $text)
+        if ($result.Lines.Count -eq 0) { $result.Problem = 'the AI answered without a list of lines (it may have said no)' }
+    } catch {
+        $result.Problem = (Get-ErrorText $_).Replace($ai.Key, '[key]')
+    }
+    return $result
+}
+
 # ---------- making one ----------
 
 function New-Subliminal {
@@ -368,7 +483,8 @@ function New-Subliminal {
         [datetime]$Date = (Get-Date),
         [int]$Seed = 0,
         $Settings,
-        $GoalData
+        $GoalData,
+        [switch]$NoAi
     )
     if ($null -eq $Settings) { $Settings = Read-Settings $Root }
     if ($null -eq $GoalData) { $GoalData = Read-Goals (Join-Path $Root 'my-goals.txt') }
@@ -389,16 +505,37 @@ function New-Subliminal {
     $target = [Math]::Max(5, [int]$Settings.lines - $always.Count)
 
     $made = New-Object System.Collections.Generic.List[string]
+    $aiCount = 0
+    $aiName = ''
+    $aiProblem = ''
+    if (-not $NoAi) {
+        $ai = Get-AiLines -Root $Root -Settings $Settings -GoalData $GoalData -Focus $focus -Count $target
+        if ($ai.Provider) { $aiName = $script:ProviderNames[$ai.Provider] }
+        if (-not $aiName) { $aiName = 'AI' }
+        foreach ($line in $ai.Lines) {
+            if ($made.Count -ge $target) { break }
+            if (Add-CleanLine $made $seen $line $never $Settings.maxWords) { $aiCount++ }
+        }
+        if ($ai.Problem) {
+            $aiProblem = $ai.Problem
+            Write-Log $Root ("$aiName skipped, phrase banks used instead: " + $aiProblem)
+        }
+    }
+
     $offline = New-OfflineLines -Goals $goals -FocusIndex $focusIndex -Banks $banks -Count ($target - $made.Count) `
         -Never $never -MaxWords $Settings.maxWords -Rng $rng -Seen $seen
     foreach ($line in $offline) { $made.Add($line) }
+
     $source = 'offline phrase banks'
+    if ($aiCount -gt 0 -and $offline.Count -gt 0) { $source = "$aiName AI ($aiCount) + phrase banks ($($offline.Count))" }
+    elseif ($aiCount -gt 0) { $source = "$aiName AI" }
 
     $lines = @($always) + @(Get-Shuffled $made $rng)
     return [pscustomobject]@{
-        Lines  = $lines
-        Focus  = $focus
-        Source = $source
+        Lines     = $lines
+        Focus     = $focus
+        Source    = $source
+        AiProblem = $aiProblem
     }
 }
 
@@ -498,6 +635,7 @@ function Save-Subliminal {
         MindzoomPath = $mindzoomPath
         ArchivePath  = $archive
         Problem      = $problem
+        AiProblem    = $Result.AiProblem
     }
 }
 
@@ -535,6 +673,7 @@ function Show-Result($Saved) {
     }
     Write-Host ''
     Write-Host ("Made " + $Saved.Lines.Count + " lines (" + $Saved.Source + ").") -ForegroundColor Green
+    if ($Saved.AiProblem) { Write-Host ("The AI had a problem, so the phrase banks filled in: " + $Saved.AiProblem) -ForegroundColor Yellow }
     if ($Saved.Focus) { Write-Host ("Today's spotlight: " + $Saved.Focus) }
     if ($Saved.MindzoomPath) {
         Write-Host ("In Mindzoom as: " + (Split-Path -Leaf $Saved.MindzoomPath))
