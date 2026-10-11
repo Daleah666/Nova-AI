@@ -4,6 +4,7 @@ import { useGame } from '../store/game'
 import { useUi, type DeskTab } from '../store/settings'
 import { ArtPanel } from './ArtPanel'
 import { DiceTray } from './DiceTray'
+import { DmChat } from './DmChat'
 import { FocusBadge, FocusTimer } from './FocusTimer'
 import { useFocusTicker } from './focusHooks'
 import { Journal } from './Journal'
@@ -16,6 +17,7 @@ const TABS: { id: DeskTab; label: string; render: () => ReactNode }[] = [
   { id: 'focus', label: 'Focus', render: () => <FocusTimer /> },
   { id: 'dice', label: 'Dice', render: () => <DiceTray /> },
   { id: 'oracle', label: 'Oracle', render: () => <OraclePanel /> },
+  { id: 'dm', label: 'DM', render: () => <DmChat /> },
   { id: 'journal', label: 'Journal', render: () => <Journal /> },
   { id: 'art', label: 'Art', render: () => <ArtPanel /> },
   { id: 'settings', label: 'Settings', render: () => <SettingsPanel /> },

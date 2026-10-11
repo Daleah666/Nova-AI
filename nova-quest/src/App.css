@@ -1046,6 +1046,8 @@
   margin: 0;
 }
 .desk-body code {
+  font-family: inherit;
+  font-size: inherit;
   color: var(--gold);
 }
 .focus-badge {
@@ -1259,4 +1261,66 @@
 }
 .input.num {
   width: 72px;
+}
+.dm-chat {
+  height: 100%;
+}
+.dm-status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #070b26;
+}
+.dm-status.on {
+  color: var(--ok);
+}
+.dm-status.off {
+  color: var(--ink-dim);
+}
+.dm-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 240px;
+}
+.dm-msg {
+  padding: 8px 10px;
+  border-radius: 8px;
+  max-width: 92%;
+  font-size: 20px;
+}
+.dm-user {
+  align-self: flex-end;
+  background: #8c2257;
+  border: 2px solid #e0558f;
+}
+.dm-assistant {
+  align-self: flex-start;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid #3b4fb8;
+}
+.dm-assistant strong {
+  color: var(--gold);
+  font-weight: normal;
+}
+.dm-event {
+  align-self: center;
+  font-size: 16px;
+  color: var(--mp);
+  padding: 2px 8px;
+}
+.event-tag {
+  font-size: 7px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--mp);
+  color: #070b26;
+  margin-right: 4px;
+}
+.dm-typing {
+  color: var(--ink-dim);
+  animation: blink 1.2s steps(2) infinite;
+}
+.dm-input {
+  resize: vertical;
+  font-size: 19px;
 }

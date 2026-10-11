@@ -142,7 +142,7 @@ export function SceneScreen() {
         )}
         <p className={`vn-text ${speakerName ? '' : 'narration'}`}>
           {text.slice(0, shown)}
-          {done && !node.choices?.length && <span className="vn-caret">{node.battle ? ' ⚔' : ' ▼'}</span>}
+          {done && !node.choices?.length && <span className="vn-caret"> ▼</span>}
         </p>
 
         {done && !pending && visibleChoices.length > 0 && (
