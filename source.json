@@ -1,0 +1,18 @@
+{
+  "name": "VRFury 2.0",
+  "id": "com.nova.vrfury2.listing",
+  "url": "https://daleah666.github.io/Nova-AI/index.json",
+  "author": {
+    "name": "Daleah666",
+    "url": "https://github.com/Daleah666"
+  },
+  "description": "Drop in an FBX and get an upload-ready VRChat avatar.",
+  "infoLink": {
+    "text": "How to use it",
+    "url": "https://github.com/Daleah666/Nova-AI/tree/main/Packages/com.nova.vrfury2#readme"
+  },
+  "bannerUrl": "",
+  "githubRepos": [
+    "Daleah666/Nova-AI"
+  ]
+}
