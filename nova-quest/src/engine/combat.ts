@@ -42,6 +42,8 @@ export type BattleEventKind = 'info' | 'damage' | 'miss' | 'heal' | 'mp' | 'defe
 
 export interface BattleEvent {
   id: number
+  /** Sequence number of the action that produced this event (0 = battle start). */
+  action: number
   kind: BattleEventKind
   text: string
   actorId?: string
@@ -73,6 +75,7 @@ export interface BattleState {
   /** First-round attack mode for the party (e.g. an ambush grants advantage). */
   partyMode: RollMode
   nextEventId: number
+  actionSeq: number
 }
 
 export interface CombatDefs {
@@ -148,6 +151,7 @@ export function startBattle(
     canFlee: opts.canFlee ?? true,
     partyMode: opts.partyMode ?? 'normal',
     nextEventId: 1,
+    actionSeq: 0,
   }
   const names = enemies.length === 1 ? enemies[0].name : `${enemies.length} foes`
   state = pushEvent(state, { kind: 'info', text: `${names} appear! Roll for initiative!` })
@@ -172,8 +176,12 @@ export function alive(state: BattleState, side: Side): Combatant[] {
   return state.combatants.filter((c) => c.side === side && c.hp > 0)
 }
 
-function pushEvent(state: BattleState, e: Omit<BattleEvent, 'id'>): BattleState {
-  return { ...state, log: [...state.log, { ...e, id: state.nextEventId }], nextEventId: state.nextEventId + 1 }
+function pushEvent(state: BattleState, e: Omit<BattleEvent, 'id' | 'action'>): BattleState {
+  return {
+    ...state,
+    log: [...state.log, { ...e, id: state.nextEventId, action: state.actionSeq }],
+    nextEventId: state.nextEventId + 1,
+  }
 }
 
 function updateCombatant(state: BattleState, id: string, patch: Partial<Combatant>): BattleState {
@@ -270,7 +278,7 @@ function targetsFor(state: BattleState, actor: Combatant, skill: SkillDef, targe
   }
 }
 
-function useSkill(state: BattleState, actor: Combatant, skill: SkillDef, targetId: string | undefined, rng: Rng) {
+function castSkill(state: BattleState, actor: Combatant, skill: SkillDef, targetId: string | undefined, rng: Rng) {
   if (actor.mp < skill.mpCost) {
     return pushEvent(state, { kind: 'info', text: `${actor.name} doesn't have enough MP for ${skill.name}.` })
   }
@@ -295,7 +303,7 @@ function useSkill(state: BattleState, actor: Combatant, skill: SkillDef, targetI
   return s
 }
 
-function useItem(state: BattleState, actor: Combatant, item: ItemDef, targetId: string, rng: Rng): BattleState {
+function applyItem(state: BattleState, actor: Combatant, item: ItemDef, targetId: string, rng: Rng): BattleState {
   const have = state.inventory[item.id] ?? 0
   if (have <= 0) return pushEvent(state, { kind: 'info', text: `No ${item.name} left!` })
   let s: BattleState = { ...state, inventory: { ...state.inventory, [item.id]: have - 1 } }
@@ -371,7 +379,7 @@ export function applyAction(state: BattleState, action: BattleAction, defs: Comb
   const actor = currentActor(state)
   if (!actor || actor.id !== action.actorId || actor.hp <= 0) return state
 
-  let s = state
+  let s: BattleState = { ...state, actionSeq: state.actionSeq + 1 }
   switch (action.type) {
     case 'attack':
       s = resolveAttack(s, actor, action.targetId, actor.attackBonus, actor.damage, actor.side === 'party' ? 'strikes' : 'hits', rng)
@@ -379,13 +387,13 @@ export function applyAction(state: BattleState, action: BattleAction, defs: Comb
     case 'skill': {
       const skill = defs.skills[action.skillId]
       if (!skill) return state
-      s = useSkill(s, actor, skill, action.targetId, rng)
+      s = castSkill(s, actor, skill, action.targetId, rng)
       break
     }
     case 'item': {
       const item = defs.items[action.itemId]
       if (!item) return state
-      s = useItem(s, actor, item, action.targetId, rng)
+      s = applyItem(s, actor, item, action.targetId, rng)
       break
     }
     case 'defend':
