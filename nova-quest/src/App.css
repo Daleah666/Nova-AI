@@ -1192,6 +1192,8 @@
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.3);
   border-left: 4px solid var(--ink-dim);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 .j-story {
   border-left-color: var(--accent);
