@@ -6,7 +6,9 @@ Writes fresh affirmations from my-goals.txt into Mindzoom's affirmations folder.
   subliminal.ps1 -Now       make today's subliminal now
   subliminal.ps1 -WithMe    make one together, step by step
   subliminal.ps1 -Daily     what the daily task runs: makes one only if today's is still missing
+  subliminal.ps1 -On / -Off turn the daily task on or off
   subliminal.ps1 -Status    show what is set up
+  subliminal.ps1 -Setup     first-time setup
 
 Keep this file plain ASCII: Windows PowerShell 5.1 reads scripts without a BOM as ANSI.
 #>
@@ -15,7 +17,10 @@ param(
     [switch]$Now,
     [switch]$WithMe,
     [switch]$Daily,
+    [switch]$On,
+    [switch]$Off,
     [switch]$Status,
+    [switch]$Setup,
     [string]$Root = $PSScriptRoot
 )
 
@@ -714,7 +719,7 @@ function Add-GoalsToFile([string]$Path, [string[]]$Goals) {
     while ($lines.Count -gt 0 -and $lines[$lines.Count - 1] -eq '') { $lines.RemoveAt($lines.Count - 1) }
     $existing = @{}
     foreach ($g in (Read-Goals $Path).Goals) { $existing[$g.ToLowerInvariant()] = $true }
-    $new = @($Goals | Where-Object { $_ -and -not $existing.ContainsKey($_.Trim().ToLowerInvariant()) } | ForEach-Object { $_.Trim() })
+    $new = @($Goals | Where-Object { $_ -and -not $existing.ContainsKey($_.Trim().ToLowerInvariant()) } | ForEach-Object { ConvertTo-Capital $_.Trim() })
     if ($new.Count -eq 0) { return 0 }
 
     $header = -1
@@ -839,17 +844,248 @@ function Show-Result($Saved) {
     Write-Host ''
 }
 
+function Get-WriterText([string]$Root) {
+    $ai = Get-AiKey $Root
+    if ($null -eq $ai) { return 'phrase banks' }
+    if (-not $ai.Provider) { return 'phrase banks (key type unknown)' }
+    return $script:ProviderNames[$ai.Provider] + ' AI + phrase banks'
+}
+
 function Show-Status([string]$Root) {
     $settings = Read-Settings $Root
     $goals = Read-Goals (Join-Path $Root 'my-goals.txt')
     $folder = Resolve-MindzoomFolder $settings
     Write-Host ''
     Write-Host 'Subliminal Maker status' -ForegroundColor Cyan
+    Write-Host ('  Daily: ' + (Get-DailyText) + '  at ' + $settings.dailyTime + ' and when you log in')
     if ($folder) { Write-Host "  Mindzoom folder: $folder" } else { Write-Host '  Mindzoom folder: missing (run Setup)' -ForegroundColor Yellow }
+    Write-Host ('  Daily file name: ' + $settings.dailyFileName)
+    Write-Host ('  Written by: ' + (Get-WriterText $Root))
     Write-Host ("  Goals: " + @($goals.Goals).Count + "   Always-include lines: " + @($goals.Always).Count + "   Never-include: " + @($goals.Never).Count)
     $last = Get-LastMade $Root
     if ($last) { Write-Host "  Last made: $last" } else { Write-Host '  Last made: still waiting for the first one' }
+    Write-Host ('  History and log: ' + (Get-MadeFolder $Root))
     Write-Host ''
+}
+
+# ---------- daily task ----------
+
+$script:TaskName = 'Subliminal Maker Daily'
+
+function Test-TaskSupport {
+    return [bool](Get-Command Register-ScheduledTask -ErrorAction SilentlyContinue)
+}
+
+function Get-DailyTask {
+    if (-not (Test-TaskSupport)) { return $null }
+    return Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
+}
+
+function Get-DailyText {
+    if ($null -eq (Get-DailyTask)) { return 'OFF' }
+    $info = Get-ScheduledTaskInfo -TaskName $script:TaskName -ErrorAction SilentlyContinue
+    if ($info -and $info.NextRunTime) { return 'ON (next: ' + $info.NextRunTime.ToString('ddd HH:mm') + ')' }
+    return 'ON'
+}
+
+function Get-DailyTime($Settings) {
+    try {
+        return [datetime]::ParseExact([string]$Settings.dailyTime, 'HH:mm', [System.Globalization.CultureInfo]::InvariantCulture)
+    } catch {
+        return [datetime]::Today.AddHours(8)
+    }
+}
+
+# A normal Windows scheduled task for your own account: visible in Task Scheduler, removed completely by Disable-Daily.
+function Enable-Daily([string]$Root) {
+    if (-not (Test-TaskSupport)) {
+        Write-Host 'The daily task needs Windows.' -ForegroundColor Yellow
+        return $false
+    }
+    $settings = Read-Settings $Root
+    $scriptPath = Join-Path $Root 'subliminal.ps1'
+    $argument = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $scriptPath + '" -Daily'
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argument -WorkingDirectory $Root
+    $user = $env:USERDOMAIN + '\' + $env:USERNAME
+    $morning = New-ScheduledTaskTrigger -Daily -At (Get-DailyTime $settings)
+    $logon = New-ScheduledTaskTrigger -AtLogOn -User $user
+    $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+        -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -MultipleInstances IgnoreNew
+    $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
+    $description = 'Makes a fresh subliminal from my-goals.txt once a day and puts it in Mindzoom. Turn it off from the Subliminal Maker menu.'
+    try {
+        Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger @($morning, $logon) -Settings $taskSettings `
+            -Principal $principal -Description $description -Force -ErrorAction Stop | Out-Null
+        Write-Log $Root 'daily task turned ON (morning + login)'
+        return $true
+    } catch {
+        try {
+            Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger @($morning) -Settings $taskSettings `
+                -Principal $principal -Description $description -Force -ErrorAction Stop | Out-Null
+            Write-Host 'Windows only allowed the morning time (the at-login start needs admin), so that is what is set.' -ForegroundColor Yellow
+            Write-Log $Root 'daily task turned ON (morning only)'
+            return $true
+        } catch {
+            Write-Host ('Windows said no to the daily task: ' + $_.Exception.Message) -ForegroundColor Red
+            Write-Log $Root ('daily task could not be turned on: ' + $_.Exception.Message)
+            return $false
+        }
+    }
+}
+
+function Disable-Daily([string]$Root) {
+    if (-not (Test-TaskSupport)) { return $false }
+    if (Get-DailyTask) {
+        Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false
+        Write-Log $Root 'daily task turned OFF'
+    }
+    return $true
+}
+
+function Switch-Daily([string]$Root) {
+    if ($null -ne (Get-DailyTask)) {
+        $answer = Read-Host 'Daily is ON. Turn it off? (y/N)'
+        if ($answer -match '^\s*[yY]') {
+            if (Disable-Daily $Root) { Write-Host 'Daily is OFF. Your Mindzoom file stays as it is until you make a new one.' }
+        }
+        return
+    }
+    if (Enable-Daily $Root) {
+        $settings = Read-Settings $Root
+        Write-Host ('Daily is ON. A fresh one lands in Mindzoom every day at ' + $settings.dailyTime + ' (or when you log in, if that is later).') -ForegroundColor Green
+    }
+}
+
+# ---------- menu and setup ----------
+
+function Open-Goals([string]$Root) {
+    $path = Join-Path $Root 'my-goals.txt'
+    if ($env:OS -ne 'Windows_NT') {
+        Write-Host "Open this file to change your goals: $path"
+        return
+    }
+    Write-Host 'Opening my-goals.txt in Notepad. Save and close it when you are done.'
+    Start-Process -FilePath 'notepad.exe' -ArgumentList ('"' + $path + '"') -Wait
+    $answer = Read-Host 'Make a fresh one now with your changes? (Y/n)'
+    if ($answer -notmatch '^\s*[nN]') { Show-Result (Invoke-Make -Root $Root -Mode 'now') }
+}
+
+function New-DesktopShortcut([string]$Root) {
+    try {
+        $desktop = [Environment]::GetFolderPath('Desktop')
+        $shell = New-Object -ComObject WScript.Shell
+        $link = $shell.CreateShortcut((Join-Path $desktop 'Subliminal Maker.lnk'))
+        $link.TargetPath = Join-Path $Root 'Subliminal.bat'
+        $link.WorkingDirectory = $Root
+        $link.Description = 'Make, change, or turn on your daily subliminal'
+        $link.Save()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Read-SecretLine([string]$Prompt) {
+    if ([Console]::IsInputRedirected) { return ([string](Read-Host -Prompt $Prompt)).Trim() }
+    $secure = Read-Host -Prompt $Prompt -AsSecureString
+    if ($null -eq $secure -or $secure.Length -eq 0) { return '' }
+    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr).Trim() }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+}
+
+function Invoke-Setup([string]$Root) {
+    Write-Host ''
+    Write-Host 'Subliminal Maker setup' -ForegroundColor Magenta
+    Write-Host ''
+    $settings = Read-Settings $Root
+
+    $found = Find-MindzoomFolder
+    if ($found) {
+        Write-Host "1) Found Mindzoom's affirmations folder: $found" -ForegroundColor Green
+        $settings.mindzoomFolder = ''
+    } else {
+        Write-Host "1) Mindzoom's affirmations folder was missing from the usual spot." -ForegroundColor Yellow
+        Write-Host '   Paste its path here (or drag the folder into this window), or press Enter to skip.'
+        while ($true) {
+            $typed = ([string](Read-Host '   Folder')).Trim().Trim('"')
+            if (-not $typed) { break }
+            if (Test-Path -LiteralPath $typed -PathType Container) {
+                $settings.mindzoomFolder = (Resolve-Path -LiteralPath $typed).Path
+                Write-Host '   Saved.' -ForegroundColor Green
+                break
+            }
+            Write-Host '   That folder is missing. Try again, or press Enter to skip.'
+        }
+    }
+    Save-Settings $Root $settings
+
+    Write-Host ''
+    $ai = Get-AiKey $Root
+    if ($ai -and $ai.Provider) {
+        Write-Host ('2) AI key found: ' + $script:ProviderNames[$ai.Provider]) -ForegroundColor Green
+    } else {
+        Write-Host '2) Optional: paste an AI key so an AI writes fresh lines each day.'
+        Write-Host '   Claude keys start with sk-ant-, Grok keys with xai-, OpenAI keys with sk-.'
+        Write-Host '   Press Enter to skip. It works without one, using the built-in phrase banks.'
+        $key = Read-SecretLine '   Key'
+        if ($key) {
+            Write-TextLines (Join-Path $Root 'my-key.txt') @($key)
+            $provider = Get-KeyProvider $key
+            if ($provider) { Write-Host ('   Saved your ' + $script:ProviderNames[$provider] + ' key in my-key.txt.') -ForegroundColor Green }
+            else { Write-Host '   Saved, but that key type is unknown, so the phrase banks will be used.' -ForegroundColor Yellow }
+        }
+    }
+
+    Write-Host ''
+    if ($env:OS -eq 'Windows_NT' -and (New-DesktopShortcut $Root)) {
+        Write-Host '3) Added a "Subliminal Maker" shortcut to your desktop.' -ForegroundColor Green
+    } else {
+        Write-Host '3) Open Subliminal.bat in this folder any time for the menu.'
+    }
+
+    Write-Host ''
+    $daily = Read-Host '4) Turn on the daily subliminal? It runs every morning and when you log in. (Y/n)'
+    if ($daily -notmatch '^\s*[nN]') {
+        if (Enable-Daily $Root) { Write-Host ('   Daily is ON (' + $settings.dailyTime + ' and at login).') -ForegroundColor Green }
+    }
+
+    Write-Host ''
+    Write-Host '5) Making your first one now...'
+    Show-Result (Invoke-Make -Root $Root -Mode 'now')
+    Write-Host ('Last step: in Mindzoom, pick "' + [System.IO.Path]::GetFileNameWithoutExtension([string]$settings.dailyFileName) + '" as your affirmations.') -ForegroundColor Cyan
+    Write-Host 'Leave it picked. The words inside change by themselves every day.'
+}
+
+function Show-Menu([string]$Root) {
+    while ($true) {
+        $settings = Read-Settings $Root
+        $mindzoom = 'found'
+        if (-not (Resolve-MindzoomFolder $settings)) { $mindzoom = 'missing (run Setup)' }
+        Write-Host ''
+        Write-Host '  Subliminal Maker' -ForegroundColor Magenta
+        Write-Host '  ----------------'
+        Write-Host ('  Daily: ' + (Get-DailyText) + '   Mindzoom: ' + $mindzoom + '   Writer: ' + (Get-WriterText $Root))
+        Write-Host ''
+        Write-Host "  1  Make today's subliminal now"
+        Write-Host '  2  Make one with me'
+        Write-Host '  3  Edit my goals'
+        Write-Host '  4  Turn daily ON or OFF'
+        Write-Host '  5  Status'
+        Write-Host '  Q  Quit'
+        Write-Host ''
+        $choice = Read-Host '  Pick one'
+        if ($null -eq $choice) { return }
+        switch ($choice.Trim().ToUpperInvariant()) {
+            '1' { Show-Result (Invoke-Make -Root $Root -Mode 'now') }
+            '2' { Invoke-WithMe $Root }
+            '3' { Open-Goals $Root }
+            '4' { Switch-Daily $Root }
+            '5' { Show-Status $Root }
+            'Q' { return }
+            default { Write-Host '  Pick 1 to 5, or Q to quit.' -ForegroundColor Yellow }
+        }
+    }
 }
 
 # ---------- start ----------
@@ -865,6 +1101,10 @@ if ($Daily) {
         exit 1
     }
 }
-if ($Status) { Show-Status $Root; exit 0 }
+if ($Now) { Show-Result (Invoke-Make -Root $Root -Mode 'now'); exit 0 }
 if ($WithMe) { Invoke-WithMe $Root; exit 0 }
-Show-Result (Invoke-Make -Root $Root -Mode 'now')
+if ($Status) { Show-Status $Root; exit 0 }
+if ($On) { Switch-Daily $Root; exit 0 }
+if ($Off) { [void](Disable-Daily $Root); Write-Host 'Daily is OFF.'; exit 0 }
+if ($Setup) { Invoke-Setup $Root; exit 0 }
+Show-Menu $Root
