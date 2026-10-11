@@ -1,0 +1,23 @@
+{
+  "name": "com.nova.vrfury2",
+  "displayName": "VRFury 2.0 - FBX to VRChat Autopilot",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Drop in an FBX and get an upload-ready VRChat avatar: Humanoid rig, avatar descriptor (viewpoint, visemes, eyes, blink), materials, Update mode that carries your old setup over, preflight checks, and one-click Build & Upload.",
+  "author": {
+    "name": "Daleah666",
+    "url": "https://github.com/Daleah666/Nova-AI"
+  },
+  "keywords": [
+    "vrchat",
+    "avatar",
+    "fbx",
+    "humanoid",
+    "upload"
+  ],
+  "vpmDependencies": {
+    "com.vrchat.avatars": ">=3.7.0"
+  },
+  "documentationUrl": "https://github.com/Daleah666/Nova-AI/tree/main/Packages/com.nova.vrfury2#readme",
+  "changelogUrl": "https://github.com/Daleah666/Nova-AI/blob/main/Packages/com.nova.vrfury2/CHANGELOG.md"
+}
