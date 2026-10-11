@@ -116,6 +116,7 @@ interface GameActions {
   setNpcArt: (npcId: string, dataUrl: string | undefined) => void
   exportSave: () => string
   importSave: (json: string) => void
+  wipeSave: () => void
 }
 
 interface Ephemeral {
@@ -159,6 +160,50 @@ function pickData(s: GameStore): GameData {
   const out = {} as Record<string, unknown>
   for (const k of DATA_KEYS) out[k] = s[k]
   return out as unknown as GameData
+}
+
+/** Approximate autosave footprint in bytes (portrait data URLs dominate). */
+export const savedSize = (s: GameStore) => JSON.stringify(pickData(s)).length
+
+const NOT_A_SAVE = "That file doesn't look like a Nova Quest save."
+
+/** Validates an exported save and returns clean game data (unknown keys dropped, dangling screens repaired). */
+export function parseSave(json: string): GameData {
+  let parsed: { game?: unknown; data?: Record<string, unknown> }
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    throw new Error(NOT_A_SAVE)
+  }
+  const raw = parsed?.data
+  if (parsed?.game !== 'nova-quest' || !raw || typeof raw !== 'object' || !Array.isArray(raw.party)) {
+    throw new Error(NOT_A_SAVE)
+  }
+  const data = freshData() as unknown as Record<string, unknown>
+  for (const k of DATA_KEYS) if (k !== 'version' && raw[k] !== undefined) data[k] = raw[k]
+  const out = data as unknown as GameData
+  if (out.party.length === 0) out.screen = 'title'
+  else if ((out.screen === 'battle' && !out.battle) || (out.screen === 'scene' && !out.scene)) out.screen = 'world'
+  return out
+}
+
+let lastQuotaWarning = 0
+
+/** localStorage that reports a full quota (usually from big portraits) instead of throwing inside a state update. */
+const guardedStorage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> = {
+  getItem: (k) => localStorage.getItem(k),
+  removeItem: (k) => localStorage.removeItem(k),
+  setItem: (k, v) => {
+    try {
+      localStorage.setItem(k, v)
+    } catch (e) {
+      console.warn('Nova Quest autosave failed', e)
+      if (Date.now() - lastQuotaWarning > 30_000) {
+        lastQuotaWarning = Date.now()
+        useGame.getState().notify('Autosave failed: browser storage is full. Export your save or remove some portraits.', 'danger')
+      }
+    }
+  },
 }
 
 const DIRS: Record<string, Facing> = { '0,-1': 'up', '0,1': 'down', '-1,0': 'left', '1,0': 'right' }
@@ -466,20 +511,20 @@ export const useGame = create<GameStore>()(
         exportSave: () => JSON.stringify({ game: 'nova-quest', savedAt: new Date().toISOString(), data: pickData(get()) }, null, 2),
 
         importSave: (json) => {
-          const parsed = JSON.parse(json) as { game?: string; data?: Partial<GameData> }
-          const data = parsed?.data
-          if (parsed?.game !== 'nova-quest' || !data || !Array.isArray(data.party)) {
-            throw new Error("That file doesn't look like a Nova Quest save.")
-          }
-          set({ ...freshData(), ...data, version: 1 })
+          set({ ...parseSave(json) })
           notify('Save loaded!', 'reward')
+        },
+
+        wipeSave: () => {
+          set({ ...freshData() })
+          notify('Save wiped. A fresh tale awaits.')
         },
       }
     },
     {
       name: 'nova-quest-save',
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => guardedStorage),
       partialize: (s) => pickData(s),
     },
   ),

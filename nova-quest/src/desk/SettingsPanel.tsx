@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { sfx } from '../audio'
+import { savedSize, useGame } from '../store/game'
 import { useSettings } from '../store/settings'
+import { downloadText } from '../util/image'
 
 const PRESETS = [
   { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
@@ -79,6 +81,8 @@ export function SettingsPanel() {
         />
       </label>
 
+      <SaveSection />
+
       <h3>Story</h3>
       <label className="row">
         Text speed
@@ -94,5 +98,87 @@ export function SettingsPanel() {
         <span className="muted">{s.textSpeed} cps</span>
       </label>
     </div>
+  )
+}
+
+function formatBytes(n: number) {
+  return n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(2)} MB`
+}
+
+function SaveSection() {
+  const exportSave = useGame((s) => s.exportSave)
+  const importSave = useGame((s) => s.importSave)
+  const wipeSave = useGame((s) => s.wipeSave)
+  const partySize = useGame((s) => s.party.length)
+  const savedBytes = useGame(savedSize)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState('')
+  const [confirmWipe, setConfirmWipe] = useState(false)
+
+  const onExport = () => {
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
+    downloadText(`nova-quest-save-${stamp}.json`, exportSave())
+    sfx('confirm')
+  }
+
+  const onImport = async (file: File | undefined) => {
+    if (!file) return
+    setError('')
+    try {
+      importSave(await file.text())
+      sfx('levelup')
+    } catch (e) {
+      setError((e as Error).message)
+      sfx('bump')
+    }
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  return (
+    <>
+      <h3>Save data</h3>
+      <p className="muted">
+        Autosaves to this browser after every action ({formatBytes(savedBytes)} used). Export a file to back up your party, quests,
+        journal, and art, or to move them to another device.
+      </p>
+      <div className="row wrap">
+        <button className="btn small" onClick={onExport} disabled={partySize === 0}>
+          Export save
+        </button>
+        <button className="btn small" onClick={() => fileRef.current?.click()}>
+          Import save
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          aria-label="Import save file"
+          onChange={(e) => void onImport(e.target.files?.[0])}
+        />
+        {confirmWipe ? (
+          <>
+            <button
+              className="btn small danger"
+              onClick={() => {
+                wipeSave()
+                setConfirmWipe(false)
+                sfx('defeat')
+              }}
+            >
+              Really wipe everything?
+            </button>
+            <button className="btn small ghost" onClick={() => setConfirmWipe(false)}>
+              Keep it
+            </button>
+          </>
+        ) : (
+          <button className="btn small ghost" onClick={() => setConfirmWipe(true)}>
+            Wipe save
+          </button>
+        )}
+      </div>
+      {error && <div className="danger-text">{error}</div>}
+    </>
   )
 }

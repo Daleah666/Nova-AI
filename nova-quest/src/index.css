@@ -117,6 +117,9 @@ h3 {
 .btn.primary {
   background: linear-gradient(180deg, #e0558f, #8c2257);
 }
+.btn.danger {
+  background: linear-gradient(180deg, #d9483b, #7a1a14);
+}
 .btn.ghost {
   background: transparent;
   box-shadow: none;
