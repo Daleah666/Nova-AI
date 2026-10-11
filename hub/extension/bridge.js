@@ -57,12 +57,12 @@
     if (d.type === "setTidy") { await ask({ type: "setTidy", tidy: d.tidy }); sendActivity(); return; }
     if (d.type === "reopen") { await ask({ type: "reopen", url: d.url }); setTimeout(sendActivity, 500); return; }
     // Calls that answer back (Grok images and the Grok key status). The key itself is only ever sent one way, to be stored.
-    if (d.type === "call" && typeof d.reqId === "string" && ["grokImage", "grokKeySet", "grokKeyClear", "grokKeyStatus", "grokKeyTest", "openExtDetails", "relayCall", "relayCodeSet", "relayCodeClear", "relayStatus"].includes(d.op)) {
+    if (d.type === "call" && typeof d.reqId === "string" && ["grokImage", "grokKeySet", "grokKeyClear", "grokKeyStatus", "grokKeyTest", "openExtDetails", "relayCall", "relayCodeSet", "relayCodeClear", "relayStatus", "keyStatus", "keySet", "keyClear", "keyTest"].includes(d.op)) {
       const res = await ask(Object.assign({}, d.args || {}, { type: d.op }));
       post("reply", { reqId: d.reqId, result: res });
       return;
     }
   });
 
-  post("present", { version: chrome.runtime.getManifest().version, caps: ["connect", "peek", "dictate", "tidy", "grok", "details", "relay"] });
+  post("present", { version: chrome.runtime.getManifest().version, caps: ["connect", "peek", "dictate", "tidy", "grok", "details", "relay", "keys"] });
 })();
