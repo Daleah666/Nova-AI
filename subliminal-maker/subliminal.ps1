@@ -1105,7 +1105,7 @@ if ($Daily) {
 if ($Now) { Show-Result (Invoke-Make -Root $Root -Mode 'now'); exit 0 }
 if ($WithMe) { Invoke-WithMe $Root; exit 0 }
 if ($Status) { Show-Status $Root; exit 0 }
-if ($On) { Switch-Daily $Root; exit 0 }
+if ($On) { if (Enable-Daily $Root) { Write-Host 'Daily is ON.' }; exit 0 }
 if ($Off) { [void](Disable-Daily $Root); Write-Host 'Daily is OFF.'; exit 0 }
 if ($Setup) { Invoke-Setup $Root; exit 0 }
 Show-Menu $Root
