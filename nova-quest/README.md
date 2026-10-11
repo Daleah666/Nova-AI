@@ -25,9 +25,9 @@ npm run build    # type-check + production build into dist/
 
 **Adventure**
 
-- **Party creation:** four classes (Fighter, Wizard, Rogue, Cleric), 4d6-drop-lowest ability rolls, quick party, and your own portrait uploads.
+- **Party creation:** four classes (Fighter, Wizard, Rogue, Cleric), 4d6-drop-lowest ability rolls, quick party, and your own art or character cards.
 - **Overworld:** arrow keys / WASD (or the on-screen D-pad), Enter or Space to interact. Tall grass and swamps trigger random encounters. Visit the inn, market, mire, and goblin warren. The crystal fully restores the party.
-- **Visual-novel scenes:** typewriter dialogue, portraits, branching choices, and ability checks (d20 + modifier vs DC, with a big rolling die). Number keys pick choices.
+- **Visual-novel scenes:** typewriter dialogue, full-body character art, branching choices, and ability checks (d20 + modifier vs DC, with a big rolling die). Number keys pick choices.
 - **Combat:** initiative order, attack / skills / items / defend / flee, MP-costed spells, crits that double the dice, enemy AI that heals and focuses on the weakest hero, ambush advantage, XP, gold, and loot.
 - **Quest line:** help Mira recover the guild ledger from the goblin warren: sneak, bluff, or parley your way in, then face the boss.
 
@@ -41,7 +41,7 @@ npm run build    # type-check + production build into dist/
 | Oracle | Mythic-style yes/no oracle with "and/but" results and random twists. |
 | DM | Chat with a Dungeon Master (offline mode, or AI with your own key). |
 | Journal | Everything that happened: story beats, rolls, battles, quests, level ups. |
-| Art | Upload portraits for your heroes and NPCs. |
+| Art | Import your own PNGs and character cards, recruit cards into the party, switch between illustrated and pixel style. |
 | Settings | AI provider, sound and ambience, text speed, save export/import/wipe. |
 
 A synthesized lo-fi tavern loop ("Vibes") and retro sound effects are generated with the Web Audio API, so there are no audio files.
@@ -56,12 +56,30 @@ OpenAI-compatible base URL that supports tool calling. Then paste your API key.
 - Without a key, the offline DM still rolls dice in your messages ("roll 1d20+5"), answers questions ending in `?` with the oracle, and offers story seeds.
 - The API must allow browser requests (CORS). OpenAI, OpenRouter, and Ollama do.
 
+## Character art
+
+Heroes, NPCs, and monsters use illustrated anime-style sprites with transparent backgrounds
+(`src/assets/art/`). Switch to the original pixel sprites in **Desk > Art > Art style**.
+
+To use your own art, open **Desk > Art** and drop in any number of images, or upload one in party creation:
+
+- **Matching by name.** Files are matched to characters by filename, so Ren'Py-style names work:
+  `mira.png`, `old_bram_happy.png`, `ch_goblin_02.webp`, `fighter.png` (the default look for that class),
+  or a party member's name. Anything that doesn't match waits in a list where you pick who it's for.
+- **Character cards.** SillyTavern / TavernAI cards (PNG with an embedded `chara` or `ccv3` chunk, or a
+  `.json` card next to its PNG) are read for the name and description. A card is matched by its name and can
+  be recruited straight into the party as any class. Its description becomes the hero's bio, which the AI DM sees.
+- **Background removal.** Images with a flat backdrop (white, green screen, magenta, etc.) get the background
+  removed automatically. Each slot also has **Remove background**, **Restore original**, and **Reset** buttons.
+
+Your images are downscaled to 900px and stored only in this browser (IndexedDB). They are never uploaded anywhere.
+
 ## Saving
 
 The game autosaves to `localStorage` after every action. In **Desk > Settings > Save data** you can export
-a JSON backup, import it on another device, or wipe everything. Uploaded portraits are downscaled to
-256px, but many of them can still fill browser storage. If that happens you'll see a warning; export your
-save and remove some art.
+a JSON backup, import it on another device, or wipe everything. Exports include your custom art library.
+Wiping the save removes party member art but keeps your art for classes, NPCs, and monsters (clear that in
+**Desk > Art**).
 
 ## Writing your own content
 
@@ -80,9 +98,10 @@ so `npm test` catches typos in new content.
 ```
 src/
   engine/   pure, seedable game logic: dice, oracle, rules, characters, combat, scenes
-  content/  classes, monsters, items, NPCs, map, scenes, sprites
+  content/  classes, monsters, items, NPCs, map, scenes, pixel sprites
   game/     glue between content and engine (party stats, encounters, AI snapshot)
-  store/    Zustand stores: game (autosaved), settings, focus timer
+  art/      character cards, background removal, filename matching, art resolution
+  store/    Zustand stores: game (autosaved), art library (IndexedDB), settings, focus timer
   ai/       AI DM tool definitions, tool loop, offline DM
   screens/  title, party creation, overworld, scene, battle
   desk/     Vibe Desk tabs
