@@ -123,6 +123,14 @@ describe('background removal', () => {
     expect(data[3]).toBe(0)
   })
 
+  it('keeps pale skin that touches a white backdrop', () => {
+    const data = image(20, 20, [255, 255, 255], [250, 214, 180], [4, 4, 12, 12])
+    removeBackground(data, 20, 20)
+    expect(data[(10 * 20 + 10) * 4 + 3]).toBe(255)
+    expect(data[(4 * 20 + 10) * 4 + 3]).toBeGreaterThan(200)
+    expect(data[3]).toBe(0)
+  })
+
   it('does not auto-remove busy or already-transparent images', () => {
     const noisy = new Uint8ClampedArray(16 * 16 * 4).map((_, i) => (i % 4 === 3 ? 255 : (i * 37) % 256))
     expect(shouldAutoRemove(inspectBorder(noisy, 16, 16))).toBe(false)

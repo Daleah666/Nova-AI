@@ -47,9 +47,10 @@ export function shouldAutoRemove(info: BorderInfo): boolean {
 /** Mutates RGBA `data` in place. Returns the number of pixels made fully transparent. */
 export function removeBackground(data: Uint8ClampedArray, w: number, h: number, tolerance = 70): number {
   const { color: bg } = inspectBorder(data, w, h)
-  const hard = tolerance + 40
-  const lo = tolerance * 0.55
-  const hi = tolerance * 1.6
+  // Pale skin sits ~85 away from white, so the flood must stop well short of that.
+  const hard = tolerance
+  const lo = tolerance * 0.45
+  const hi = tolerance * 1.3
   const n = w * h
   const d = new Float32Array(n)
   for (let p = 0; p < n; p++) d[p] = dist(data, p * 4, bg)
