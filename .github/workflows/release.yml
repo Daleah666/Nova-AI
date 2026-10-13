@@ -1,0 +1,90 @@
+# Based on vrchat-community/template-package. Makes a GitHub release (zip + .unitypackage)
+# for the version in package.json, which "Build Repo Listing" then publishes for VCC.
+# Runs by hand, or automatically when package.json changes on main. Versions that
+# already have a release tag are skipped, so bump "version" in package.json to release.
+name: Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Packages/com.nova.vrfury2/package.json"
+
+env:
+  packageName: ${{ vars.PACKAGE_NAME || 'com.nova.vrfury2' }}
+
+jobs:
+
+  config:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_exists: ${{ steps.tag.outputs.exists }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
+
+      - name: Get Version
+        id: version
+        run: echo "version=$(jq -r .version "Packages/${{ env.packageName }}/package.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Check For Existing Release Tag
+        id: tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ steps.version.outputs.version }}" > /dev/null; then
+            echo "Version ${{ steps.version.outputs.version }} is already released; bump the version in package.json to make a new release."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: config
+    if: needs.config.outputs.tag_exists == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      packagePath: Packages/${{ vars.PACKAGE_NAME || 'com.nova.vrfury2' }}
+      version: ${{ needs.config.outputs.version }}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac
+
+      - name: Check Meta Files
+        run: python3 tools/make_metas.py "${{ env.packagePath }}" --check
+
+      - name: Set Environment Variables
+        run: |
+          echo "zipFile=${{ env.packageName }}-${{ env.version }}.zip" >> $GITHUB_ENV
+          echo "unityPackage=${{ env.packageName }}-${{ env.version }}.unitypackage" >> $GITHUB_ENV
+
+      - name: Create Package Zip
+        working-directory: "${{ env.packagePath }}"
+        run: zip -r "${{ github.workspace }}/${{ env.zipFile }}" .
+
+      - name: Track Package Meta Files
+        run: find "${{ env.packagePath }}/" -name \*.meta >> metaList
+
+      - name: Create UnityPackage
+        uses: pCYSl5EDgo/create-unitypackage@v1.2.3
+        with:
+          package-path: ${{ env.unityPackage }}
+          include-files: metaList
+
+      - name: Create Tag
+        id: tag_version
+        uses: rickstaa/action-create-tag@88dbf7ff6fe2405f8e8f6c6fdfd78829bc631f83
+        with:
+          tag: "${{ env.version }}"
+
+      - name: Make Release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          files: |
+            ${{ env.zipFile }}
+            ${{ env.unityPackage }}
+            ${{ env.packagePath }}/package.json
+          tag_name: ${{ env.version }}
