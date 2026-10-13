@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Talk to the Hub</title>
+<link rel="stylesheet" href="panel.css">
+<style>
+body{min-width:0;place-content:center;text-align:center;min-height:100vh;margin:0}
+.mic{width:84px;height:84px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:var(--panel);border:1px solid var(--edge)}
+.mic svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.mic.on{background:var(--accent);color:var(--ink);border-color:transparent;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,124,191,.55)}50%{box-shadow:0 0 0 16px rgba(255,124,191,0)}}
+#text{font-size:15px;min-height:2.8em;margin:0}
+@media (prefers-reduced-motion: reduce){.mic.on{animation:none}}
+</style>
+</head>
+<body>
+<button class="mic" id="mic" type="button" aria-label="Talk"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
+<p id="text" aria-live="polite"></p>
+<p id="status" class="hint">Starting…</p>
+<script src="voice.js"></script>
+</body>
+</html>

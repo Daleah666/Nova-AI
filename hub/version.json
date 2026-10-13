@@ -1,0 +1,27 @@
+{
+  "artifact": "https://claude.ai/artifact/9aQgcMWmM7zPBkhuhRKbWu",
+  "title": "My Hub",
+  "version": "1791668451-c7c0",
+  "seq": 19,
+  "extension": {
+    "version": "1.6.0",
+    "filename": "The-Hub-extension-1.6.zip"
+  },
+  "files": [
+    {
+      "path": "apps/familiar.html",
+      "size": 2243295,
+      "sha256": "2a5c15192196766f78697afb06477b45b55b2548c81c965a2840a5013c1eeb79"
+    },
+    {
+      "path": "ext/hub-extension.json",
+      "size": 68411,
+      "sha256": "6aab98b8a1d81757711763b80ee3936048c39340ea9fae2485c99f1855ce0bd9"
+    },
+    {
+      "path": "index.html",
+      "size": 479899,
+      "sha256": "3738d94e99c290fa2ffce0a3590807f6928f02f3c1211be71ff2af2522153d72"
+    }
+  ]
+}

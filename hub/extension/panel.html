@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Hub</title>
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<header>
+  <span class="logo">H</span>
+  <div class="t"><b>The Hub</b><span id="status" class="lab">Tracking</span></div>
+</header>
+<div class="actions">
+  <button id="popBtn" class="pri" type="button">Pop up the Hub</button>
+  <button id="tabBtn" type="button">Open in a tab</button>
+  <button id="sideBtn" type="button">Side panel</button>
+  <button id="talkBtn" type="button" style="grid-column:1/-1">🎙 Talk to your host</button>
+</div>
+<p class="hint"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> pops the Hub up. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> lets you talk to your host, like “add lunch with Sam tomorrow at 1 to my calendar”.</p>
+
+<section>
+  <span class="lab">Connect to your Hub</span>
+  <p class="hint">Open the Hub and press <b>Connect</b> (in the helper, or Settings → Chrome extension), then press Connect in the little window that pops up. Until then, the Hub can't see your tabs or activity.</p>
+  <details>
+    <summary class="hint" style="cursor:pointer">Use a code instead</summary>
+    <div class="row" style="margin-top:8px"><span class="lab">Code</span><button id="newCode" class="link" type="button">New code</button></div>
+    <div class="pair"><code id="code">·····</code><button id="copyCode" class="pri" type="button">Copy</button></div>
+    <p class="hint">Paste it in the Hub under Settings → Chrome extension.</p>
+  </details>
+</section>
+
+<section>
+  <label class="sw"><span><b>Tidy tabs</b><br><span class="hint">Tabs you haven't looked at for a while</span></span><input type="checkbox" id="tidySw"></label>
+  <div class="row2">
+    <select id="tidyMins" aria-label="After"><option value="15">after 15 min</option><option value="30">after 30 min</option><option value="60">after 1 hour</option><option value="120">after 2 hours</option><option value="240">after 4 hours</option><option value="480">after 8 hours</option><option value="1440">after 1 day</option></select>
+    <select id="tidyAct" aria-label="Then"><option value="group">go in an Idle group</option><option value="sleep">go to sleep</option><option value="close">close (reopen from the Hub)</option></select>
+  </div>
+  <p class="hint">Never touches pinned tabs, tabs playing sound, the tab you're on, or your Hub tabs. <span id="tidyCount"></span></p>
+</section>
+
+<section>
+  <div class="row"><span class="lab">Today</span><b id="total" class="big">0m</b></div>
+  <div id="sites" class="bars"></div>
+</section>
+<section>
+  <div class="row"><span class="lab">Last 14 days</span><span id="avg" class="lab"></span></div>
+  <div id="cols" class="cols"></div>
+</section>
+<section class="settings">
+  <label class="sw"><span>Track time on sites</span><input type="checkbox" id="trackSw"></label>
+  <label class="sw"><span>New tabs open the Hub</span><input type="checkbox" id="newtabSw"></label>
+  <p class="hint">Time is counted one minute at a time for the site in your active tab, only while you're at the computer. It stays on this computer and is shared only with the Hub page while it's open.</p>
+  <div class="row2"><button id="clearBtn" type="button">Clear activity</button><button id="uninstallBtn" class="danger" type="button">Uninstall</button></div>
+  <p id="note" class="hint"></p>
+</section>
+<script src="panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+name: Sync My Hub from Claude
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/sync-hub.mjs
+      - .github/workflows/sync-hub.yml
+      - package.json
+      - package-lock.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-hub
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Pull the newest My Hub from Claude
+        run: node scripts/sync-hub.mjs
+
+      - name: Save changes
+        if: github.event_name != 'pull_request'
+        run: |
+          git add -A hub
+          if git diff --cached --quiet; then
+            echo "My Hub is already up to date."
+            exit 0
+          fi
+          seq=$(node -p "require('./hub/version.json').seq")
+          ext=$(node -p "(require('./hub/version.json').extension || {}).version || 'none'")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync My Hub from Claude (publish #${seq}, extension ${ext})"
+          git push

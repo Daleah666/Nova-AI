@@ -1,0 +1,11 @@
+{
+  "name": "nova-ai",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-hub": "node scripts/sync-hub.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}
