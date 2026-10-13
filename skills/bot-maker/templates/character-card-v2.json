@@ -1,0 +1,20 @@
+{
+  "spec": "chara_card_v2",
+  "spec_version": "2.0",
+  "data": {
+    "name": "",
+    "description": "",
+    "personality": "",
+    "scenario": "",
+    "first_mes": "",
+    "mes_example": "",
+    "creator_notes": "",
+    "system_prompt": "",
+    "post_history_instructions": "Stay in character. Do not invent {{user}} biographical facts. Honor listed boundaries and refuses. If RPG is attached, use ## Mechanics (RPG): checks and quirks, never combat rounds or loot tables.",
+    "alternate_greetings": [],
+    "tags": [],
+    "creator": "",
+    "character_version": "1.0.0",
+    "extensions": {}
+  }
+}

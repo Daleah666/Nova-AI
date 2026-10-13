@@ -1,0 +1,156 @@
+# Bot Maker blank scaffold. Copy to characters/<slug>/character.yaml and fill.
+# Person first (identity → speech → body → psyche → history → world),
+# then bot wrapping. Field names match references/character-schema.yaml.
+
+meta:
+  slug: "" # lowercase-hyphen
+  mode: full # quick | full | rpg | avatar-first
+  tone: sfw # sfw | mature
+  genre: ""
+  creator: ""
+  character_version: "1.0.0"
+  rpg_attached: false
+  mature_section: skipped # skipped | filled
+  tags: []
+
+identity:
+  name: ""
+  aliases: []
+  age: ""
+  pronouns: ""
+  species: ""
+  occupation: ""
+  role_in_story: ""
+
+speech_style:
+  register: ""
+  cadence: ""
+  vocabulary: ""
+  verbal_tics: []
+  languages: []
+
+physical:
+  face: ""
+  hair: ""
+  eyes: ""
+  skin: ""
+  build: ""
+  height: ""
+  marks: []
+  posture: ""
+  gait: ""
+  micro_expressions: []
+  scent: ""
+  sound: ""
+  wardrobe:
+    default: ""
+    situational: {}
+    # work: ""
+    # sleep: ""
+    # rain: ""
+    # formal: ""
+  avatar_notes:
+    body_tags: []
+    palette: []
+    silhouette: ""
+    props: []
+    rig:
+      humanoid_scale: ""
+      hair_sim: ""
+      cloth_sim: ""
+      extra_bones: []
+      mesh_notes: ""
+      physics_mood: ""
+    world_fit: ""
+
+psychology:
+  traits:
+    big_five:
+      openness:
+        score: 3 # 1-5
+        behavior: ""
+      conscientiousness:
+        score: 3
+        behavior: ""
+      extraversion:
+        score: 3
+        behavior: ""
+      agreeableness:
+        score: 3
+        behavior: ""
+      neuroticism:
+        score: 3
+        behavior: ""
+    custom: []
+    # - name: ""
+    #   note: ""
+  feelings:
+    baseline: ""
+    range: []
+    triggers: []
+    # - stimulus: ""
+    #   feeling: ""
+    #   tell: ""
+    comfort: []
+    jealousy: ""
+    shame: ""
+    pride: ""
+  beliefs: []
+  interests: []
+
+background:
+  early: ""
+  mid: ""
+  later: ""
+  secrets: []
+  # - secret: ""
+  #   who_knows: ""
+  #   what_happens_if_revealed: ""
+  self_lies: []
+
+social:
+  relationship: ""
+  boundaries:
+    - do not invent user biographical facts
+  flirt: ""
+  conflict: ""
+  # sexual_preference: skipped unless meta.mature_section is filled
+  # sexual_preference:
+  #   orientation: ""
+  #   dynamics: ""
+  #   hard_limits: []
+  #   soft_limits: []
+  #   aftercare: ""
+  environment:
+    home: ""
+    work: ""
+    places: []
+    climate: ""
+    culture: ""
+    sensory: ""
+
+bot_contract:
+  description_instructions:
+    pov: third_limited # first | second | third_limited | third_omniscient
+    detail_level: selective # sparse | selective | lush
+    sensory_focus:
+      - sound
+      - light
+    never_describe:
+      - do not invent user biographical facts
+  goals: []
+  refuses:
+    - inventing user biographical facts
+    - ignoring stated limits
+  user_handling: ""
+  memory: ""
+  first_message: ""
+  example_dialogues: []
+  # - title: ""
+  #   lines: |
+  #     {{user}}:
+  #     {{char}}:
+  ooc_rules:
+    - Stay in character unless the user says OOC.
+    - No sycophancy.
+    - Never invent user biographical facts.
