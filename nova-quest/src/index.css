@@ -1,0 +1,180 @@
+:root {
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+  --font-body: 'VT323', ui-monospace, monospace;
+  --bg: #0a0f2c;
+  --bg-2: #121a45;
+  --win-top: #2a3b8f;
+  --win-bottom: #0e1650;
+  --win-border: #e8ecff;
+  --ink: #f4f6ff;
+  --ink-dim: #a9b2e0;
+  --gold: #fbf236;
+  --hp: #6abe30;
+  --hp-low: #d95763;
+  --mp: #5fcde4;
+  --xp: #df7126;
+  --accent: #ff7ac6;
+  --danger: #ac3232;
+  --ok: #99e550;
+  color-scheme: dark;
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.25;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 10%, #1d2a74 0%, transparent 40%),
+    radial-gradient(circle at 80% 90%, #3a1d5e 0%, transparent 45%),
+    var(--bg);
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+.pixel {
+  font-family: var(--font-pixel);
+  font-weight: normal;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  font-size: 22px;
+}
+h2 {
+  font-size: 15px;
+}
+h3 {
+  font-size: 11px;
+}
+
+.window {
+  background: linear-gradient(180deg, var(--win-top), var(--win-bottom));
+  border: 3px solid var(--win-border);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 3px #050826,
+    inset 0 0 0 2px rgba(0, 0, 0, 0.35),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+  padding: 12px 14px;
+}
+
+.btn {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 2px solid var(--win-border);
+  background: linear-gradient(180deg, #3b4fb8, #1c2775);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 3px 0 #050826;
+  transition:
+    transform 80ms ease,
+    filter 120ms ease;
+}
+.btn:hover:not(:disabled),
+.btn:focus-visible {
+  filter: brightness(1.2);
+  outline: none;
+}
+.btn:hover:not(:disabled)::before,
+.btn:focus-visible::before {
+  content: '\25B6\00a0' / '';
+  color: var(--gold);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #050826;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: linear-gradient(180deg, #e0558f, #8c2257);
+}
+.btn.danger {
+  background: linear-gradient(180deg, #d9483b, #7a1a14);
+}
+.btn.ghost {
+  background: transparent;
+  box-shadow: none;
+}
+.btn.small {
+  font-size: 8px;
+  padding: 6px 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 2px solid var(--ink-dim);
+  background: #070b26;
+  font-size: 20px;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.bar {
+  position: relative;
+  height: 10px;
+  border: 2px solid #050826;
+  border-radius: 4px;
+  background: #1a1a2e;
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  transition: width 400ms ease;
+}
+
+.muted {
+  color: var(--ink-dim);
+}
+.gold {
+  color: var(--gold);
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.grow {
+  flex: 1;
+}
+.sprite {
+  image-rendering: pixelated;
+}
