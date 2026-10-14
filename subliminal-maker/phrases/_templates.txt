@@ -1,0 +1,30 @@
+# Lines that work with any goal.
+# {g} is your goal written as "staying girly..." or "being confident...".
+# {G} is the same thing with a capital first letter.
+# The three sections are the three layers:
+#   [becoming] who I am becoming
+#   [why]      why I care
+#   [when]     when this happens, I do this
+
+[becoming]
+{G} comes naturally to me.
+{G} is who I am now.
+I love {g}.
+I get better at {g} every day.
+{G} feels easy and normal.
+I wake up ready for {g}.
+{G} is part of me.
+
+[why]
+{G} makes me happy.
+{G} feels like the real me.
+I choose {g} because it feels so good.
+{G} makes my whole day brighter.
+{G} makes me proud of myself.
+
+[when]
+When I wake up, {g} is my first thought.
+When I hear these words, {g} gets easier.
+When I see my reflection, I think of {g}.
+Every breath makes {g} feel more natural.
+Every time I smile, {g} feels easier.

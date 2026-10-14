@@ -1,0 +1,28 @@
+# Theme: happy mindset
+# This theme also fills in extra lines when the others run out.
+keywords: happy, happiness, mindset, positive, mood, joy, joyful, good, great, grateful, gratitude, upbeat, cheerful, self-love
+
+[becoming]
+I am in a good mood by default.
+My mind is bright and positive.
+I am grateful for my life.
+Good things find me easily.
+I love myself exactly as I am.
+Happiness is my natural state.
+I choose joy all day.
+I am kind to myself.
+
+[why]
+A happy mind makes everything easier.
+Feeling good helps me create.
+Joy makes my days feel lighter.
+Being kind to myself feels right.
+My good mood spreads to everyone around me.
+
+[when]
+When I wake up, I think of something I love.
+When something goes wrong, I find the bright side.
+When I hear these words, my mood lifts.
+When I feel low, I remember how far I have come.
+Every time I breathe out, I feel lighter.
+When I see the sun, I feel happy.
