@@ -1,0 +1,67 @@
+# Structure example for the Skills / Auto / Helpers lane.
+# Copy keys, not the life story. Do not treat this as a persona.
+
+id: nova-helpers
+title: Nova helpers / amateur-tutor
+status: active
+intent: >-
+  Keep helper agents on research → plan → do, teaching an amateur
+  without taking over character or companion chats.
+
+applies_to:
+  agents:
+    - context-flow-steward
+  skills:
+    - context-flow-align
+  turns: this
+
+sticky: opt-in
+
+bias:
+  direction: >-
+    This mix pulls prompts toward short taught helper steps
+    and declared skill stacks, and away from persona play,
+    silent hooks, and hidden steering.
+  strength: medium
+  hidden: false
+  allowed: true
+
+load:
+  required:
+    - context-flow-align
+  optional:
+    - retry-four-then-pivot
+  refuse:
+    - session-start hook
+    - silentvesper-desire-hook
+    - daily subliminal write-back
+    - alwaysApply context-flow rule
+
+behavior:
+  tone: Plain speech. One idea at a time. Teach the why in one line.
+  teach: true
+  moves_allowed:
+    - inventory skills and agents on this turn
+    - name mix, bias, and strength
+    - align against this pattern
+    - save a pattern file only if asked
+  moves_refused:
+    - become a companion or RP voice
+    - auto-load memory pages
+    - inject instructions the user cannot see
+    - invent who the user is
+  exit_line: DONE — Context Flow Steward complete.
+
+alignment:
+  pass_if:
+    - steward stays a steward
+    - bias sentence is readable in the report
+    - no hook landed
+  drift_if:
+    - reply slips into character
+    - extra world/character skills steer a helper turn
+    - the report invites a second analysis pass
+
+notes:
+  - retry-four is optional and may not exist on main
+  - this example is the helpers lane, not a user biography

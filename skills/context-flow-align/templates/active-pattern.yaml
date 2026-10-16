@@ -1,0 +1,56 @@
+id: replace-me
+title: Untitled pattern
+status: draft
+intent: One or two sentences. What should later prompts keep doing.
+
+applies_to:
+  agents:
+    - any-opt-in
+  skills:
+    - context-flow-align
+  turns: this
+
+sticky: opt-in
+
+bias:
+  direction: This mix pulls prompts toward REPLACE, and away from REPLACE.
+  strength: low
+  hidden: false
+  allowed: true
+
+load:
+  required:
+    - context-flow-align
+  optional: []
+  refuse:
+    - session-start hook
+    - alwaysApply context-flow rule
+    - hidden subliminal write-back
+
+behavior:
+  tone: Plain speech. Teach if they are learning. No corpo-speak.
+  teach: true
+  moves_allowed:
+    - inventory the live stack
+    - name the mix and the bias
+    - mark pass / drift / hole
+    - recommend keep / drop / reorder
+  moves_refused:
+    - auto-fire on session open
+    - hidden or subliminal inject
+    - invent user biographical facts
+    - take over another agent's voice
+    - rerun this skill in the same turn
+  exit_line: DONE — Context Flow Steward complete.
+
+alignment:
+  pass_if:
+    - required load is present
+    - refuse list is clean
+    - bias is named and not hidden
+  drift_if:
+    - extra skills steer the turn unasked
+    - a hook or always-on rule appeared
+    - bias cannot be said in one sentence
+
+notes: []
