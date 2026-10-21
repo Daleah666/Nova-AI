@@ -1,0 +1,9 @@
+{
+  "name": "easy-image-editor",
+  "private": true,
+  "type": "module",
+  "description": "A small local page for making pictures with the same Grok API My Hub already uses.",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}
