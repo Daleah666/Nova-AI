@@ -106,7 +106,7 @@ A pairing is one character plus the lists you used together: role, outfit, world
 The **Idol loop** sits above the prompt box.
 
 1. Make a picture with those lists filled in. It is filed on this computer with that character and those lists.
-2. Next time you open the stage, the loop shows that pairing again. The lists are filled in, so you do not start from a blank line. The cards keep sliding, and the counter wraps back to the first pairing. That is the loop.
+2. Next time you open the stage, the loop shows that pairing again. The lists are filled in, so you do not start from a blank line. A pink line under the cards fills up, then the highlight moves to the next pairing. When it passes the last one, it says it looped back to the first. That is the loop.
 3. Click the pairing. A small library opens with only the pictures that used those same lists. A different outfit, world, role, or tag is a different pairing, so those pictures stay out.
 
 Before you have any pictures, the loop shows a short explanation and an example card. That example is not a real picture. Cast shows the same pairings under the character. Click one there too.

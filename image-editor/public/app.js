@@ -437,6 +437,7 @@ function renderLoop() {
     next.disabled = true;
     run.classList.add('is-empty');
     run.innerHTML = emptyLoopHtml();
+    $('#loopDock').classList.add('paused');
     return;
   }
   prev.disabled = false;
@@ -450,15 +451,21 @@ function renderLoop() {
   const sig = list.map((item) => item.id + ':' + item.count + ':' + listLabel(item)).join('|');
   if (sig !== state.loopSig) {
     state.loopSig = sig;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const once = reduce || list.length >= 4 ? list : Array.from({ length: 4 }, (_, index) => list[index % list.length]);
-    const sequence = reduce ? once : [...once, ...once];
-    run.innerHTML = sequence.map((pairing, index) => pairButton(pairing, !reduce && index >= once.length)).join('');
-    run.style.animationDuration = (once.length * 5) + 's';
+    run.innerHTML = list.map((pairing) => pairButton(pairing, false)).join('');
   }
   run.querySelectorAll('.pair').forEach((button) => {
     button.classList.toggle('on', button.dataset.pairing === current.id);
   });
+  $('#loopDock').classList.toggle('paused', Boolean(state.loopPause || state.openPairingId));
+  restartLoopMeter();
+}
+
+function restartLoopMeter() {
+  const bar = document.querySelector('#loopProgress i');
+  if (!bar || !state.pairings.length) return;
+  bar.style.animation = 'none';
+  void bar.offsetWidth;
+  bar.style.animation = '';
 }
 
 function stepLoop(step) {
@@ -500,8 +507,8 @@ function maybeFillBlank() {
 function closePairingLibrary() {
   state.openPairingId = '';
   $('#pairLib').classList.add('hidden');
-  $('#loopRun').classList.remove('paused');
   state.loopPause = $('#loopDock').matches(':hover');
+  $('#loopDock').classList.toggle('paused', state.loopPause);
 }
 
 function openPairingLibrary(id) {

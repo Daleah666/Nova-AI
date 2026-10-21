@@ -95,6 +95,7 @@
             </div>
           </div>
         </div>
+        <div class="loop-progress" id="loopProgress" aria-hidden="true"><i></i></div>
       </div>
       <form class="composer" id="composer">
         <div class="crow">
@@ -107,7 +108,7 @@
           <button type="button" id="newChat" class="quiet">New chat</button>
           <button type="button" id="openMemory" class="quiet">Memory</button>
         </div>
-        <textarea id="prompt" rows="2" placeholder="Ask for a picture…" aria-label="Your line"></textarea>
+        <textarea id="prompt" rows="2" placeholder="Say something to Muse…" aria-label="Your line"></textarea>
         <div class="tags">
           <label class="character">Character <input id="fCharacter" aria-label="Character" autocomplete="off"></label>
           <label class="role">Role / cast <input id="fRole" aria-label="Role or cast" autocomplete="off"></label>
@@ -163,6 +164,7 @@
       <div class="lib" id="pairLibGrid"></div>
     </div>
   </div>
+  <script src="/creator.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

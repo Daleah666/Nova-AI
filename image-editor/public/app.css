@@ -421,20 +421,34 @@ input, textarea {
 }
 .spin.prev { left: 28px; }
 .spin.next { right: 28px; }
-.cast-filters { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 18vh; }
+.cast-filters { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
 .cast-filters button[aria-pressed="true"] { background: var(--text); color: #14120c; }
 .cast-filters input { width: 168px; flex: none; border-radius: 999px; }
-.portrait {
-  width: 148px;
-  height: 210px;
+.motion {
+  width: min(520px, 92%);
   margin: 18px auto 0;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(180deg, #2a3142, #151820);
-  border: 1px solid var(--edge2);
-  box-shadow: 0 20px 40px -24px black;
-  font-size: 2rem;
+  overflow: hidden;
+  border-radius: 14px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.motion-track {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  animation: reel 10s linear infinite;
+}
+.motion img {
+  height: 96px;
+  width: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #1a1e28;
+  flex: none;
+}
+@keyframes reel {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 .cast-foot, .card-actions {
   display: flex;
@@ -528,23 +542,36 @@ input, textarea {
   background: var(--box);
   border: 1px solid var(--edge);
 }
-.loop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.loop-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .loop-head #loopNote { margin-right: auto; }
 #loopNote.flash { color: var(--pink); }
-.loop-marquee { overflow: hidden; }
+.loop-marquee { overflow: visible; }
 .loop-run {
   display: flex;
-  gap: 0;
-  width: max-content;
-  animation: loop-run 22s linear infinite;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: auto;
 }
-.loop-run.paused,
-.loop-marquee:hover .loop-run,
-.loop-marquee:focus-within .loop-run { animation-play-state: paused; }
-.loop-run.is-empty { display: block; width: auto; animation: none; transform: none; }
-@keyframes loop-run {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+.loop-run.is-empty { display: block; }
+.loop-progress {
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 99px;
+  background: var(--edge);
+  overflow: hidden;
+}
+.loop-progress i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--pink);
+  animation: loop-fill 4.5s linear;
+}
+.loop-dock.paused .loop-progress i,
+.loop-dock:hover .loop-progress i { animation-play-state: paused; }
+@keyframes loop-fill {
+  from { width: 0; }
+  to { width: 100%; }
 }
 .pair {
   display: flex;
@@ -556,7 +583,6 @@ input, textarea {
   padding: 8px;
   background: var(--panel);
   flex: none;
-  margin-right: 8px;
 }
 .pair.on { border-color: var(--pink); box-shadow: 0 0 0 1px var(--pink); }
 .pair span:not(.av) { display: flex; flex-direction: column; min-width: 0; }
@@ -564,10 +590,8 @@ input, textarea {
 .pair small {
   color: var(--faint);
   font-size: 0.72rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
+  white-space: normal;
+  max-width: 190px;
 }
 .pair em {
   margin-left: auto;
@@ -606,7 +630,7 @@ input, textarea {
 .pair-lib-card .crow { margin-bottom: 6px; }
 .pair-lib-card .crow .hint { margin-right: auto; }
 @media (prefers-reduced-motion: reduce) {
-  .loop-run { animation: none; flex-wrap: wrap; width: auto; }
+  .loop-progress i { animation: none; width: 100%; }
 }
 .hidden { display: none !important; }
 @media (max-width: 800px) {
