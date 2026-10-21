@@ -61,7 +61,7 @@ function hint(key) {
 }
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
-  const payload = typeof body === 'string' ? body : JSON.stringify(body);
+  const payload = typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': type,
     'Cache-Control': 'no-store',
@@ -230,10 +230,12 @@ async function status() {
 }
 
 async function generate(message) {
+  const prompt = String(message.prompt || '').trim();
+  if (!prompt) return { ok: false, error: 'Write what you want the picture to show first.' };
   const mode = message.mode === 'edit' ? 'edit' : 'generate';
   const connection = message.connection === 'bridge' ? 'bridge' : 'direct';
   const request = {
-    prompt: message.prompt,
+    prompt,
     aspect: message.aspect,
     mode,
     image: message.image,
