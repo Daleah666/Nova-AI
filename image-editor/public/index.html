@@ -67,7 +67,7 @@
       <section class="view" id="view-stage" aria-label="Stage">
         <div class="intro" id="intro">
           <h1>Duet Stage</h1>
-          <p>A one-on-one visual novel chat. Your character stands on the left, theirs on the right, and the dialogue runs between them. Type a prompt below and the picture is kept, with the character, role, outfit, and world.</p>
+          <p>Type a prompt and press Go. The picture is kept with the character and the lists under the box. The idol loop brings that pairing back. Click it to see the pictures made with those same lists.</p>
         </div>
         <figure class="hero hidden" id="hero">
           <img id="heroImg" alt="">
@@ -78,6 +78,24 @@
       <section class="view hidden" id="view-card" aria-label="Character card"></section>
       <section class="view hidden" id="view-memory" aria-label="Latest pictures"></section>
       <section class="view hidden" id="view-more" aria-label="Settings"></section>
+      <div class="loop-dock" id="loopDock" aria-label="Idol loop">
+        <div class="loop-head">
+          <span class="lbl">Idol loop</span>
+          <span class="hint" id="loopNote" aria-live="polite">Pairings you have used come back around. Click one for its pictures.</span>
+          <span class="hint" id="loopCount"></span>
+          <button type="button" class="quiet" id="loopPrev" aria-label="Previous pairing">‹</button>
+          <button type="button" class="quiet" id="loopNext" aria-label="Next pairing">›</button>
+        </div>
+        <div class="loop-marquee" id="loopMarquee">
+          <div class="loop-run is-empty" id="loopRun">
+            <div class="loop-empty">
+              <h2>The loop starts after the first picture</h2>
+              <p>Choose a character and fill the lists under the prompt: role, outfit, world, and tags. Press Go. Next time, that pairing comes back here instead of a blank line. Click it and you get only the pictures made with those same lists.</p>
+              <div class="pair ghost" aria-hidden="true"><span class="av" style="--c:#ff7cbf">Y</span><span><b>Example · Your idol</b><small>Companion · red cloak · harbor · night</small></span><em>click</em></div>
+            </div>
+          </div>
+        </div>
+      </div>
       <form class="composer" id="composer">
         <div class="crow">
           <button class="who" id="openCast" type="button" title="Characters: choose who you're talking to">
@@ -130,6 +148,19 @@
     <div class="crow">
       <button type="button" id="museShow">Show me</button>
       <button type="button" class="quiet" id="museLater">Later</button>
+    </div>
+  </div>
+  <div class="pair-lib hidden" id="pairLib" role="dialog" aria-modal="true" aria-labelledby="pairLibTitle">
+    <div class="pair-lib-card">
+      <div class="crow">
+        <span class="lbl">Pictures with these lists</span>
+        <span class="hint" id="pairLibCount"></span>
+        <button type="button" class="quiet" id="pairLibClose">Close</button>
+      </div>
+      <h2 id="pairLibTitle"></h2>
+      <p id="pairLibLists"></p>
+      <p class="hint">Same character, same role, same outfit, same world, same tags. A different list is a different set of pictures.</p>
+      <div class="lib" id="pairLibGrid"></div>
     </div>
   </div>
   <script src="/app.js"></script>

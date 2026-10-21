@@ -20,10 +20,19 @@ const state = {
   shownId: '',
   draft: null,
   deleteArm: '',
+  pairings: [],
+  loopIndex: 0,
+  loopSig: '',
+  loopNote: '',
+  openPairingId: '',
+  loopPause: false,
+  castWrapped: false,
+  activePairingId: '',
 };
 
 const TOUR = [
-  'Type what you want to see, then press Go. I file the picture in Memory.',
+  'Type what you want to see, then press Go. I file the picture with the character and the lists you used.',
+  'The idol loop repeats those pairings. Click one to open the pictures made with the same lists.',
   'Cast is the carousel. New means a new character. Create opens the card.',
   'The card keeps the case: character, role, outfit, world, and free tags. Those tags filter Memory.',
 ];
@@ -47,6 +56,98 @@ function pictureCount(person) {
   const name = person.name.toLowerCase();
   const items = state.libraryAll || state.library;
   return items.filter((item) => (item.character || '').toLowerCase() === name || item.characterId === person.id).length;
+}
+
+function norm(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function tagsOf(item) {
+  const raw = Array.isArray(item.tags) ? item.tags : String(item.tags || '').split(',');
+  const out = [];
+  for (const itemTag of raw) {
+    const tag = norm(itemTag);
+    if (!tag || out.includes(tag)) continue;
+    out.push(tag);
+  }
+  out.sort();
+  return out;
+}
+
+function whoKey(item) {
+  const id = item.characterId || '';
+  if (id && state.cast.some((person) => person.id === id)) return 'id:' + id;
+  const name = norm(item.character);
+  const person = name && state.cast.find((entry) => norm(entry.name) === name);
+  if (person) return 'id:' + person.id;
+  if (id) return 'id:' + id;
+  return 'name:' + name;
+}
+
+function sameLists(a, b) {
+  return norm(a.role) === norm(b.role)
+    && norm(a.outfit) === norm(b.outfit)
+    && norm(a.world) === norm(b.world)
+    && tagsOf(a).join('\n') === tagsOf(b).join('\n');
+}
+
+function samePair(item, pairing) {
+  return whoKey(item) === whoKey(pairing) && sameLists(item, pairing);
+}
+
+function listLabel(pairing) {
+  const tags = (pairing.tags || []).filter(Boolean).join(', ');
+  return [pairing.role, pairing.outfit, pairing.world, tags].filter(Boolean).join(' · ') || 'No lists yet';
+}
+
+function personForPairing(pairing) {
+  return state.cast.find((person) => person.id && person.id === pairing.characterId)
+    || state.cast.find((person) => norm(person.name) && norm(person.name) === norm(pairing.character))
+    || null;
+}
+
+function pairingsFor(person) {
+  const key = whoKey({ character: person.name, characterId: person.id });
+  return state.pairings.filter((pairing) => whoKey(pairing) === key);
+}
+
+function pairingsFromLibrary(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const id = item.pairingId || [whoKey(item), norm(item.role), norm(item.outfit), norm(item.world), tagsOf(item).join(',')].join('|');
+    let group = groups.get(id);
+    if (!group) {
+      group = {
+        id,
+        character: item.character || '',
+        characterId: item.characterId || '',
+        role: item.role || '',
+        outfit: item.outfit || '',
+        world: item.world || '',
+        tags: item.tags || [],
+        count: 0,
+        latestAt: item.createdAt,
+        items: [],
+      };
+      groups.set(id, group);
+    }
+    if (!group.characterId && item.characterId) group.characterId = item.characterId;
+    group.count += 1;
+    group.items.push(item);
+  }
+  return [...groups.values()];
+}
+
+function itemsForPairing(pairing) {
+  const pool = [];
+  const seen = new Set();
+  for (const item of [...(pairing.items || []), ...(state.libraryAll || [])]) {
+    if (!item || seen.has(item.id) || !samePair(item, pairing)) continue;
+    seen.add(item.id);
+    pool.push(item);
+  }
+  pool.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  return pool;
 }
 
 function visibleCast() {
@@ -78,6 +179,7 @@ function showView(view) {
     if (nav) nav.setAttribute('aria-current', name === view ? 'true' : 'false');
   }
   $('#composer').classList.toggle('hidden', view === 'cast' || view === 'card');
+  $('#loopDock').classList.toggle('hidden', view !== 'stage');
   if (view === 'cast') renderCast();
   if (view === 'card') renderCard();
   if (view === 'memory') renderMemory();
@@ -164,9 +266,10 @@ function renderCast() {
     everyone: state.cast.length,
     personas: state.cast.filter((person) => person.kind === 'persona').length,
   };
+  const pairs = current ? pairingsFor(current) : [];
   const name = current ? current.name : 'New';
   const line = current
-    ? (current.one || current.role || 'On the cast')
+    ? (pairs.length ? listLabel(pairs[0]) + ' · ' + pairs[0].count + (pairs[0].count === 1 ? ' picture' : ' pictures') : (current.one || current.role || 'On the cast'))
     : 'Make a new character in the full creator';
   const cc = current ? colorFor(current) : '#c9f07a';
   const go = current ? 'Choose ' + name.slice(0, 16) : 'Create';
@@ -179,18 +282,33 @@ function renderCast() {
   )).join('');
   let body;
   if (state.castList) {
-    const rows = visibleCast().map((person) => (
-      '<button type="button" class="sopen" data-pick="' + esc(person.id) + '"><span class="av" style="--c:' + colorFor(person) + '">' + esc(initial(person.name)) + '</span><span><b>' + esc(person.name) + '</b><small>' + esc(person.one || person.role || '') + '</small></span></button>'
-    )).join('') || '<p class="sempty">Nobody matches.</p>';
+    const rows = visibleCast().map((person) => {
+      const saved = pairingsFor(person);
+      const chips = saved.map((pairing) => (
+        '<button type="button" class="pair-chip" data-pairing="' + esc(pairing.id) + '">' + esc(listLabel(pairing)) + ' · ' + pairing.count + '</button>'
+      )).join('');
+      const small = saved.length ? listLabel(saved[0]) : (person.one || person.role || '');
+      return '<div class="sitem"><button type="button" class="sopen" data-pick="' + esc(person.id) + '"><span class="av" style="--c:' + colorFor(person) + '">' + esc(initial(person.name)) + '</span><span><b>' + esc(person.name) + '</b><small>' + esc(small) + '</small></span></button>' + chips + '</div>';
+    }).join('') || '<p class="sempty">Nobody matches.</p>';
     body = '<div class="clist">' + rows + '</div>';
   } else {
-    body = '<div class="cbanner" style="--cc:' + cc + '"><p class="k">Choose who you\'re talking to</p><h2 class="cn">' + esc(name) + '</h2><small>' + esc(line) + '</small></div>'
+    const pairRow = !current
+      ? ''
+      : pairs.length
+        ? '<div class="pair-row" aria-label="Saved pairings">' + pairs.map((pairing) => (
+          '<button type="button" class="pair-chip" data-pairing="' + esc(pairing.id) + '">' + esc(listLabel(pairing)) + ' · ' + pairing.count + '</button>'
+        )).join('') + '</div>'
+        : '<p class="hint pair-missing">No saved pairing yet. Choose them and press Go. The loop will show this character with those lists.</p>';
+    body = '<div class="cbanner" style="--cc:' + cc + '"><p class="k">Choose who you\'re talking to</p><h2 class="cn">' + esc(name) + '</h2><small>' + esc(line) + '</small>' + pairRow + '</div>'
       + '<div class="portrait" aria-hidden="true">' + (current ? esc(initial(current.name)) : '+') + '</div>';
   }
   const info = state.castInfo && current
     ? '<aside class="info-card"><p class="lbl">Info</p><p><b>' + esc(current.name) + '</b></p><p>' + esc(current.role) + (current.outfit ? ' · ' + esc(current.outfit) : '') + (current.world ? ' · ' + esc(current.world) : '') + '</p><p>' + esc((current.tags || []).join(', ')) + '</p></aside>'
     : '';
-  $('#view-cast').innerHTML = '<div class="cast-head"><span class="k">Cast</span></div>'
+  const loopKicker = state.pairings.length
+    ? state.pairings.length + ' saved pairing' + (state.pairings.length === 1 ? '' : 's') + ' in the loop'
+    : 'Pairings show up here after you keep a picture';
+  $('#view-cast').innerHTML = '<div class="cast-head"><span class="k">Cast</span><span class="hint">' + esc(loopKicker) + '</span></div>'
     + '<button type="button" class="spin prev" data-spin="-1" aria-label="Previous">‹</button>'
     + '<button type="button" class="spin next" data-spin="1" aria-label="Next">›</button>'
     + body
@@ -199,7 +317,7 @@ function renderCast() {
     + info
     + '<div class="cast-foot"><button type="button" class="quiet" id="listToggle">' + (state.castList ? 'Cards' : 'List view') + '</button>'
     + '<button type="button" class="quiet" id="infoToggle" aria-pressed="' + state.castInfo + '">ⓘ Info</button>'
-    + '<span class="hint">← → or scroll to spin · Enter to choose</span>'
+    + '<span class="hint">' + (state.castWrapped ? 'Looped back to the start. ' : '') + '← → or scroll to spin · Enter to choose</span>'
     + '<button type="button" class="quiet" id="castCancel">Cancel</button>'
     + '<button type="button" id="castNew">+ New character</button>'
     + '<button type="button" class="primary" id="castGo">' + esc(go) + '</button></div>';
@@ -288,19 +406,165 @@ function renderMore() {
   if (keyBox && state.key) keyBox.value = state.key;
 }
 
+function pairButton(pairing, hidden) {
+  const person = personForPairing(pairing);
+  const name = pairing.character || 'Picture';
+  const label = name + ', ' + listLabel(pairing) + ', ' + pairing.count + (pairing.count === 1 ? ' picture' : ' pictures') + '. Open these pictures.';
+  return '<button type="button" class="pair" data-pairing="' + esc(pairing.id) + '" aria-label="' + esc(label) + '"'
+    + (hidden ? ' tabindex="-1" aria-hidden="true"' : '')
+    + '><span class="av" style="--c:' + colorFor(person || { kind: 'companion' }) + '">' + esc(initial(name)) + '</span><span><b>'
+    + esc(name) + '</b><small>' + esc(listLabel(pairing)) + '</small></span><em>' + esc(String(pairing.count)) + '</em></button>';
+}
+
+function emptyLoopHtml() {
+  return '<div class="loop-empty"><h2>The loop starts after the first picture</h2><p>Choose a character and fill the lists under the prompt: role, outfit, world, and tags. Press Go. Next time, that pairing comes back here instead of a blank line. Click it and you get only the pictures made with those same lists.</p><div class="pair ghost" aria-hidden="true"><span class="av" style="--c:#ff7cbf">Y</span><span><b>Example · Your idol</b><small>Companion · red cloak · harbor · night</small></span><em>click</em></div></div>';
+}
+
+function renderLoop() {
+  const list = state.pairings;
+  const note = $('#loopNote');
+  const count = $('#loopCount');
+  const run = $('#loopRun');
+  const prev = $('#loopPrev');
+  const next = $('#loopNext');
+  if (!list.length) {
+    state.loopIndex = 0;
+    state.loopSig = '';
+    count.textContent = '';
+    note.textContent = 'Nothing paired yet. The example is not a saved picture.';
+    note.classList.remove('flash');
+    prev.disabled = true;
+    next.disabled = true;
+    run.classList.add('is-empty');
+    run.innerHTML = emptyLoopHtml();
+    return;
+  }
+  prev.disabled = false;
+  next.disabled = false;
+  run.classList.remove('is-empty');
+  if (state.loopIndex >= list.length) state.loopIndex = 0;
+  const current = list[state.loopIndex];
+  count.textContent = (state.loopIndex + 1) + ' of ' + list.length;
+  note.textContent = state.loopNote || ((current.character || 'This pairing') + ' · ' + listLabel(current));
+  note.classList.toggle('flash', /^Looped|^Same pairing/.test(state.loopNote || ''));
+  const sig = list.map((item) => item.id + ':' + item.count + ':' + listLabel(item)).join('|');
+  if (sig !== state.loopSig) {
+    state.loopSig = sig;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const once = reduce || list.length >= 4 ? list : Array.from({ length: 4 }, (_, index) => list[index % list.length]);
+    const sequence = reduce ? once : [...once, ...once];
+    run.innerHTML = sequence.map((pairing, index) => pairButton(pairing, !reduce && index >= once.length)).join('');
+    run.style.animationDuration = (once.length * 5) + 's';
+  }
+  run.querySelectorAll('.pair').forEach((button) => {
+    button.classList.toggle('on', button.dataset.pairing === current.id);
+  });
+}
+
+function stepLoop(step) {
+  const count = state.pairings.length;
+  if (!count) return;
+  const next = (state.loopIndex + step + count) % count;
+  if (count === 1) state.loopNote = 'Same pairing again. Click it for those pictures.';
+  else if (step > 0 && next === 0) state.loopNote = 'Looped back to the first pairing.';
+  else if (step < 0 && next === count - 1) state.loopNote = 'Looped back to the last pairing.';
+  else state.loopNote = '';
+  state.loopIndex = next;
+  renderLoop();
+}
+
+function fieldsBlank() {
+  return ['#fCharacter', '#fRole', '#fOutfit', '#fWorld', '#fTags'].every((sel) => !$(sel).value.trim());
+}
+
+function applyPairing(pairing) {
+  const person = personForPairing(pairing);
+  $('#fCharacter').value = person ? person.name : (pairing.character || '');
+  $('#fRole').value = pairing.role || '';
+  $('#fOutfit').value = pairing.outfit || '';
+  $('#fWorld').value = pairing.world || '';
+  $('#fTags').value = (pairing.tags || []).join(', ');
+  if (person) state.selectedId = person.id;
+  else if (pairing.characterId) state.selectedId = pairing.characterId;
+  state.activePairingId = pairing.id;
+  renderMe();
+}
+
+function maybeFillBlank() {
+  if (!fieldsBlank() || !state.pairings.length) return;
+  applyPairing(state.pairings[0]);
+  state.loopIndex = 0;
+  renderLoop();
+}
+
+function closePairingLibrary() {
+  state.openPairingId = '';
+  $('#pairLib').classList.add('hidden');
+  $('#loopRun').classList.remove('paused');
+  state.loopPause = $('#loopDock').matches(':hover');
+}
+
+function openPairingLibrary(id) {
+  const pairing = state.pairings.find((item) => item.id === id);
+  if (!pairing) return;
+  const index = state.pairings.findIndex((item) => item.id === id);
+  if (index >= 0) state.loopIndex = index;
+  state.loopNote = '';
+  applyPairing(pairing);
+  const pictures = itemsForPairing(pairing);
+  state.openPairingId = id;
+  $('#pairLibTitle').textContent = pairing.character || 'Pictures';
+  $('#pairLibLists').textContent = listLabel(pairing);
+  $('#pairLibCount').textContent = pictures.length + (pictures.length === 1 ? ' picture' : ' pictures');
+  $('#pairLibGrid').innerHTML = pictures.length
+    ? pictures.map((item) => (
+      '<div class="ltile"><button type="button" class="pv" data-show="' + esc(item.id) + '" aria-pressed="' + (item.id === state.shownId) + '"><img alt="' + esc(item.prompt) + '" src="' + esc(item.url) + '"></button><small>' + esc(item.prompt) + '</small></div>'
+    )).join('')
+    : '<p class="sempty">No pictures with these lists.</p>';
+  $('#pairLib').classList.remove('hidden');
+  $('#loopRun').classList.add('paused');
+  state.loopPause = true;
+  renderLoop();
+  $('#pairLibClose').focus();
+}
+
+function choosePerson(person) {
+  state.selectedId = person.id;
+  const pairs = pairingsFor(person);
+  const cardBlank = ![person.role, person.outfit, person.world, ...(person.tags || [])].some(Boolean);
+  if (pairs.length && (cardBlank || sameLists(person, pairs[0]))) applyPairing(pairs[0]);
+  else fillFrom(person);
+  if (pairs.length) {
+    const index = state.pairings.findIndex((item) => item.id === pairs[0].id);
+    if (index >= 0) state.loopIndex = index;
+    state.loopNote = '';
+    renderLoop();
+  }
+  renderMe();
+  showView('stage');
+  setStatus(pairs.length
+    ? person.name + ' is on stage. Click a pairing in the loop to open the pictures made with those lists.'
+    : person.name + ' is on stage. After you press Go, this pairing comes back in the loop.', false);
+}
+
 async function loadAll() {
-  const [info, cast, library] = await Promise.all([
+  const [info, cast, library, pairings] = await Promise.all([
     api('/api/status'),
     api('/api/cast'),
     api('/api/library'),
+    api('/api/pairings'),
   ]);
   state.info = info;
   state.cast = cast.cast || [];
   state.libraryAll = library.items || [];
   state.library = state.libraryAll;
+  state.pairings = pairings && pairings.ok ? (pairings.pairings || []) : pairingsFromLibrary(state.libraryAll);
+  if (state.loopIndex >= state.pairings.length) state.loopIndex = 0;
   renderMe();
   renderLatest();
   renderHero();
+  renderLoop();
+  maybeFillBlank();
   if (state.view === 'memory') renderMemory();
   if (state.view === 'more') renderMore();
   if (state.view === 'cast') renderCast();
@@ -376,6 +640,14 @@ function showItem(id) {
   $('#fWorld').value = item.world || '';
   $('#fTags').value = (item.tags || []).join(', ');
   if (item.characterId) state.selectedId = item.characterId;
+  closePairingLibrary();
+  if (item.pairingId) {
+    const index = state.pairings.findIndex((pairing) => pairing.id === item.pairingId);
+    if (index >= 0) state.loopIndex = index;
+    state.activePairingId = item.pairingId;
+    state.loopNote = '';
+    renderLoop();
+  }
   showView('stage');
   renderHero();
   renderLatest();
@@ -429,10 +701,18 @@ async function generate(prompt) {
     state.filterTag = '';
     state.filterGroup = '';
     await loadAll();
+    if (result.item && result.item.pairingId) {
+      const index = state.pairings.findIndex((item) => item.id === result.item.pairingId);
+      if (index >= 0) state.loopIndex = index;
+      state.activePairingId = result.item.pairingId;
+      state.loopNote = '';
+      renderLoop();
+    }
     showView('stage');
     const where = result.source === 'bridge' ? 'the Hub bridge' : result.source === 'mock' ? 'practice mode' : 'the direct API';
-    setStatus('Filed in the library. This picture came through ' + where + '.', false);
-    $('#museText').textContent = 'Filed. Open Memory and click a tag to see just those pictures.';
+    const who = body.character || 'this picture';
+    setStatus('Filed in the loop for ' + who + '. Click that pairing to see the pictures with the same lists. This one came through ' + where + '.', false);
+    $('#museText').textContent = 'Filed in the idol loop. Click that pairing to see the pictures made with the same lists.';
     $('#file').value = '';
     $('#fileChip').classList.add('hidden');
   } catch (error) {
@@ -456,7 +736,9 @@ function fileToDataUrl(file) {
 
 function spin(step) {
   const list = reel();
-  state.castIndex = (state.castIndex + step + list.length) % list.length;
+  const next = (state.castIndex + step + list.length) % list.length;
+  state.castWrapped = list.length > 1 && ((step > 0 && next < state.castIndex) || (step < 0 && next > state.castIndex));
+  state.castIndex = next;
   renderCast();
 }
 
@@ -505,6 +787,23 @@ document.addEventListener('click', async (event) => {
     $('#sQ').focus();
     return;
   }
+  if (event.target.closest('#loopPrev')) {
+    stepLoop(-1);
+    return;
+  }
+  if (event.target.closest('#loopNext')) {
+    stepLoop(1);
+    return;
+  }
+  if (event.target.id === 'pairLib' || event.target.closest('#pairLibClose')) {
+    closePairingLibrary();
+    return;
+  }
+  const pairingBtn = event.target.closest('[data-pairing]');
+  if (pairingBtn) {
+    openPairingLibrary(pairingBtn.dataset.pairing);
+    return;
+  }
   const show = event.target.closest('[data-show]');
   if (show) {
     showItem(show.dataset.show);
@@ -535,6 +834,7 @@ document.addEventListener('click', async (event) => {
   if (filter) {
     state.castFilter = filter.dataset.cfilter;
     state.castIndex = 0;
+    state.castWrapped = false;
     renderCast();
     return;
   }
@@ -560,23 +860,14 @@ document.addEventListener('click', async (event) => {
   }
   const pick = event.target.closest('[data-pick]');
   if (pick) {
-    state.selectedId = pick.dataset.pick;
-    const person = selected();
-    fillFrom(person);
-    renderMe();
-    showView('stage');
+    const person = state.cast.find((item) => item.id === pick.dataset.pick);
+    if (person) choosePerson(person);
     return;
   }
   if (event.target.closest('#castGo')) {
     const current = reel()[state.castIndex];
     if (!current) beginDraft('companion');
-    else {
-      state.selectedId = current.id;
-      fillFrom(current);
-      renderMe();
-      showView('stage');
-      setStatus(current.name + ' is on stage.', false);
-    }
+    else choosePerson(current);
     return;
   }
   const kind = event.target.closest('[data-kind]');
@@ -648,9 +939,9 @@ document.addEventListener('click', async (event) => {
       return;
     }
     $('#museText').textContent = TOUR[state.tour - 1];
-    if (state.tour === 1) showView('stage');
-    if (state.tour === 2) showView('cast');
-    if (state.tour === 3) showView('card');
+    if (state.tour === 1 || state.tour === 2) showView('stage');
+    if (state.tour === 3) showView('cast');
+    if (state.tour === 4) showView('card');
   }
 });
 
@@ -688,6 +979,10 @@ $('#sQ').addEventListener('input', () => {
 });
 
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && state.openPairingId) {
+    closePairingLibrary();
+    return;
+  }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault();
     $('#sQ').focus();
@@ -720,6 +1015,17 @@ $('#view-cast').addEventListener('input', (event) => {
     }
   }
 });
+
+$('#loopDock').addEventListener('mouseenter', () => { state.loopPause = true; });
+$('#loopDock').addEventListener('mouseleave', () => { state.loopPause = Boolean(state.openPairingId); });
+$('#loopDock').addEventListener('focusin', () => { state.loopPause = true; });
+$('#loopDock').addEventListener('focusout', () => { state.loopPause = Boolean(state.openPairingId); });
+
+setInterval(() => {
+  if (state.loopPause || state.openPairingId || document.hidden || state.view !== 'stage') return;
+  if (!state.pairings.length) return;
+  stepLoop(1);
+}, 4500);
 
 loadAll().then(() => {
   showView('stage');

@@ -99,11 +99,25 @@ The page is laid out like Duet Stage: a dark stage, the cast carousel, and the c
 3. Press **Choose** on that character. The next picture keeps those fields.
 4. You can still edit the little chips under the prompt before you press **Go**. Those chips are the character, the role / cast, the outfit, the world, and free tags.
 
+## The idol loop
+
+A pairing is one character plus the lists you used together: role, outfit, world, and tags. The prompt is the picture you asked for. It is not part of the pairing. Two prompts with the same character and the same lists belong in one set.
+
+The **Idol loop** sits above the prompt box.
+
+1. Make a picture with those lists filled in. It is filed on this computer with that character and those lists.
+2. Next time you open the stage, the loop shows that pairing again. The lists are filled in, so you do not start from a blank line. The cards keep sliding, and the counter wraps back to the first pairing. That is the loop.
+3. Click the pairing. A small library opens with only the pictures that used those same lists. A different outfit, world, role, or tag is a different pairing, so those pictures stay out.
+
+Before you have any pictures, the loop shows a short explanation and an example card. That example is not a real picture. Cast shows the same pairings under the character. Click one there too.
+
+Practice mode files pictures into this loop the same way. Nothing is uploaded.
+
 ## Memory, the library
 
 Every picture that comes back is kept on this computer, in the `image-editor/data` folder. Git does not upload that folder. Each kept picture stores the image file, the prompt, the settings, the time, and the cast fields.
 
-Open **Memory** to see them. Click a tag, such as **Outfit · red cloak**, to show only pictures with that tag. Click **Everyone** to show them all again. The search box at the top filters this list too.
+Open **Memory** to see them. Click a tag, such as **Outfit · red cloak**, to show pictures with that one tag. Click **Everyone** to show them all again. The search box at the top filters this list too. For the pictures that used the same lists together, use the idol loop instead of hunting through Memory.
 
 ## Change a picture you already have
 

@@ -4,6 +4,7 @@
 // Kept pictures and the cast are saved under data/, which git ignores.
 // The key is never written into the page, the library, or the terminal.
 
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
@@ -336,14 +337,49 @@ function extFor(dataUrl) {
   return '.' + match[1];
 }
 
+function pairingParts(source) {
+  return {
+    character: clean(source.character, 80),
+    characterId: ID_OK.test(source.characterId || '') ? source.characterId : '',
+    role: clean(source.role, 80),
+    outfit: clean(source.outfit, 120),
+    world: clean(source.world, 160),
+    tags: tagList(source.tags),
+  };
+}
+
+function whoKey(parts, cast) {
+  if (parts.characterId && cast.some((person) => person.id === parts.characterId)) return 'id:' + parts.characterId;
+  const name = parts.character.toLowerCase();
+  const person = name && cast.find((item) => String(item.name || '').toLowerCase() === name);
+  if (person) return 'id:' + person.id;
+  if (parts.characterId) return 'id:' + parts.characterId;
+  return 'name:' + name;
+}
+
+function pairingKey(parts, cast) {
+  return JSON.stringify([
+    whoKey(parts, cast),
+    parts.role.toLowerCase(),
+    parts.outfit.toLowerCase(),
+    parts.world.toLowerCase(),
+    parts.tags.map((tag) => tag.toLowerCase()).sort(),
+  ]);
+}
+
+function pairingIdFor(parts, cast) {
+  return createHash('sha256').update(pairingKey(parts, cast)).digest('hex').slice(0, 16);
+}
+
 function listLibrary() {
   if (!existsSync(LIBRARY)) return [];
+  const cast = readCast();
   const items = [];
   for (const name of readdirSync(LIBRARY)) {
     if (!name.endsWith('.json')) continue;
     try {
       const item = JSON.parse(readFileSync(join(LIBRARY, name), 'utf8'));
-      if (item && ID_OK.test(item.id)) items.push(publicItem(item));
+      if (item && ID_OK.test(item.id)) items.push(publicItem(item, cast));
     } catch {
       /* skip a broken card */
     }
@@ -352,21 +388,49 @@ function listLibrary() {
   return items;
 }
 
-function publicItem(item) {
+function publicItem(item, cast = readCast()) {
+  const parts = pairingParts(item);
   return {
     id: item.id,
     prompt: item.prompt,
     createdAt: item.createdAt,
-    character: item.character || '',
-    characterId: item.characterId || '',
-    role: item.role || '',
-    outfit: item.outfit || '',
-    world: item.world || '',
-    tags: item.tags || [],
+    character: parts.character,
+    characterId: parts.characterId,
+    role: parts.role,
+    outfit: parts.outfit,
+    world: parts.world,
+    tags: parts.tags,
+    pairingId: pairingIdFor(parts, cast),
     settings: item.settings || {},
     file: item.file,
     url: '/media/' + item.id,
   };
+}
+
+function listPairings() {
+  const groups = new Map();
+  for (const item of listLibrary()) {
+    let group = groups.get(item.pairingId);
+    if (!group) {
+      group = {
+        id: item.pairingId,
+        character: item.character,
+        characterId: item.characterId,
+        role: item.role,
+        outfit: item.outfit,
+        world: item.world,
+        tags: item.tags,
+        count: 0,
+        latestAt: item.createdAt,
+        items: [],
+      };
+      groups.set(item.pairingId, group);
+    }
+    if (!group.characterId && item.characterId) group.characterId = item.characterId;
+    group.count += 1;
+    group.items.push(item);
+  }
+  return [...groups.values()];
 }
 
 function sameTag(value, tag) {
@@ -374,6 +438,8 @@ function sameTag(value, tag) {
 }
 
 function itemMatches(item, query) {
+  const pairing = clean(query.get('pairing'), 40).toLowerCase();
+  if (pairing && item.pairingId !== pairing) return false;
   const tag = clean(query.get('tag'), 40).toLowerCase();
   const group = clean(query.get('group'), 20).toLowerCase();
   const q = clean(query.get('q'), 80).toLowerCase();
@@ -535,6 +601,9 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/library') {
       const items = listLibrary().filter((item) => itemMatches(item, url.searchParams));
       return send(res, 200, { ok: true, items });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/pairings') {
+      return send(res, 200, { ok: true, pairings: listPairings() });
     }
     const media = /^\/media\/([a-z0-9]{8,40})$/i.exec(url.pathname);
     if (req.method === 'GET' && media) {
