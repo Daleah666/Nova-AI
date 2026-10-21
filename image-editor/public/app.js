@@ -21,6 +21,7 @@ const state = {
   draft: null,
   deleteArm: '',
   pairings: [],
+  chat: [],
   loopIndex: 0,
   loopSig: '',
   loopNote: '',
@@ -300,7 +301,7 @@ function renderCast() {
         )).join('') + '</div>'
         : '<p class="hint pair-missing">No saved pairing yet. Choose them and press Go. The loop will show this character with those lists.</p>';
     body = '<div class="cbanner" style="--cc:' + cc + '"><p class="k">Choose who you\'re talking to</p><h2 class="cn">' + esc(name) + '</h2><small>' + esc(line) + '</small>' + pairRow + '</div>'
-      + '<div class="portrait" aria-hidden="true">' + (current ? esc(initial(current.name)) : '+') + '</div>';
+      + motionHtml(current);
   }
   const info = state.castInfo && current
     ? '<aside class="info-card"><p class="lbl">Info</p><p><b>' + esc(current.name) + '</b></p><p>' + esc(current.role) + (current.outfit ? ' · ' + esc(current.outfit) : '') + (current.world ? ' · ' + esc(current.world) : '') + '</p><p>' + esc((current.tags || []).join(', ')) + '</p></aside>'
@@ -319,6 +320,7 @@ function renderCast() {
     + '<button type="button" class="quiet" id="infoToggle" aria-pressed="' + state.castInfo + '">ⓘ Info</button>'
     + '<span class="hint">' + (state.castWrapped ? 'Looped back to the start. ' : '') + '← → or scroll to spin · Enter to choose</span>'
     + '<button type="button" class="quiet" id="castCancel">Cancel</button>'
+    + (current ? '<button type="button" id="castEdit">Edit card</button>' : '')
     + '<button type="button" id="castNew">+ New character</button>'
     + '<button type="button" class="primary" id="castGo">' + esc(go) + '</button></div>';
 }
@@ -328,6 +330,29 @@ function cardPerson() {
   return selected();
 }
 
+function framesFor(person) {
+  if (!person) return [];
+  const name = norm(person.name);
+  return (state.libraryAll || state.library).filter((item) => (person.id && item.characterId === person.id) || (name && norm(item.character) === name));
+}
+
+function motionHtml(person) {
+  const frames = framesFor(person);
+  if (frames.length < 2) return '';
+  const cells = frames.concat(frames).map((item) => '<img alt="" src="' + esc(item.url) + '">').join('');
+  return '<div class="motion" aria-label="Moving frames of ' + esc(person.name) + '"><div class="motion-track">' + cells + '</div></div>';
+}
+
+function renderChat() {
+  const host = $('#chatLog');
+  if (!host) return;
+  const turns = state.chat || [];
+  host.classList.toggle('hidden', !turns.length);
+  host.innerHTML = turns.slice(-8).map((turn) => (
+    '<p class="line ' + (turn.role === 'muse' ? 'muse' : 'you') + '"><b>' + (turn.role === 'muse' ? 'Muse' : 'You') + '</b> ' + esc(turn.text) + '</p>'
+  )).join('');
+}
+
 function renderCard() {
   const person = cardPerson();
   const host = $('#view-card');
@@ -335,18 +360,18 @@ function renderCard() {
     host.innerHTML = '<div class="sheet"><h2>No card on this side</h2><p>Open Cast and press Create. The card is the character case: name, role, outfit, world, and free tags.</p><button type="button" class="primary" id="cardNew">+ New character</button></div>';
     return;
   }
-  const kind = person.kind === 'persona' ? 'persona' : 'companion';
-  host.innerHTML = '<div class="sheet"><p class="k">Character card</p><h2>' + esc(person.name || 'New character') + '</h2><p>Fill it in, then Accept. The next picture keeps this character, role, outfit, world, and any extra tags.</p>'
-    + '<div class="fields"><label>Name <input id="cName" value="' + esc(person.name) + '"></label>'
-    + '<div class="seg" role="group" aria-label="Role or cast"><button type="button" data-kind="companion" aria-pressed="' + (kind === 'companion') + '">Companion</button><button type="button" data-kind="persona" aria-pressed="' + (kind === 'persona') + '">Persona</button></div>'
-    + '<label>Role / cast <input id="cRole" value="' + esc(person.role || '') + '"></label>'
-    + '<label>Outfit <input id="cOutfit" value="' + esc(person.outfit || '') + '"></label>'
-    + '<label>World <input id="cWorld" value="' + esc(person.world || '') + '"></label>'
-    + '<label>One line <input id="cOne" value="' + esc(person.one || '') + '"></label>'
-    + '<label>Free tags <input id="cTags" value="' + esc((person.tags || []).join(', ')) + '" placeholder="night, rain"></label></div>'
-    + '<div class="card-actions"><button type="button" class="primary" id="accept">Accept</button>'
-    + (person.id ? '<button type="button" class="quiet danger" id="dropCard">' + (state.deleteArm === person.id ? 'Tap again to delete' : 'Delete card') + '</button>' : '')
-    + '<button type="button" class="quiet" id="cardCancel">Cancel</button></div></div>';
+  if (!window.Creator) return;
+  Creator.mount(host, person, {
+    turns: state.chat,
+    pictures: framesFor(person),
+    onSave: acceptCard,
+    onCancel() {
+      state.draft = null;
+      state.deleteArm = '';
+      showView('stage');
+    },
+    onDelete() { deleteCard(person); },
+  });
 }
 
 function tagButtons(items) {
@@ -555,21 +580,24 @@ function choosePerson(person) {
 }
 
 async function loadAll() {
-  const [info, cast, library, pairings] = await Promise.all([
+  const [info, cast, library, pairings, chat] = await Promise.all([
     api('/api/status'),
     api('/api/cast'),
     api('/api/library'),
     api('/api/pairings'),
+    api('/api/chat'),
   ]);
   state.info = info;
   state.cast = cast.cast || [];
   state.libraryAll = library.items || [];
   state.library = state.libraryAll;
+  state.chat = chat.turns || [];
   state.pairings = pairings && pairings.ok ? (pairings.pairings || []) : pairingsFromLibrary(state.libraryAll);
   if (state.loopIndex >= state.pairings.length) state.loopIndex = 0;
   renderMe();
   renderLatest();
   renderHero();
+  renderChat();
   renderLoop();
   maybeFillBlank();
   if (state.view === 'memory') renderMemory();
@@ -605,21 +633,29 @@ function beginDraft(kind) {
   showView('card');
 }
 
-async function acceptCard() {
+async function deleteCard(person) {
+  if (!person || !person.id) return;
+  if (state.deleteArm !== person.id) {
+    state.deleteArm = person.id;
+    const note = $('#crStatus');
+    if (note) note.textContent = 'Press Delete card again to remove ' + person.name + '.';
+    return;
+  }
+  await api('/api/cast/' + person.id, { method: 'DELETE' });
+  if (state.selectedId === person.id) state.selectedId = '';
+  state.draft = null;
+  state.deleteArm = '';
+  await loadAll();
+  showView('cast');
+  renderCast();
+}
+
+async function acceptCard(sheet) {
   const person = cardPerson();
-  if (!person) return;
-  const body = {
-    name: $('#cName').value,
-    kind: person.kind,
-    role: $('#cRole').value,
-    outfit: $('#cOutfit').value,
-    world: $('#cWorld').value,
-    one: $('#cOne').value,
-    tags: $('#cTags').value,
-  };
+  if (!person || !sheet) return;
   const saved = person.id
-    ? await api('/api/cast/' + person.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    : await api('/api/cast', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    ? await api('/api/cast/' + person.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheet }) })
+    : await api('/api/cast', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sheet }) });
   if (!saved.ok) {
     setStatus(saved.error || 'Could not save the card.', true);
     showView('stage');
@@ -728,7 +764,74 @@ async function generate(prompt) {
     state.busy = false;
     $('#go').disabled = false;
     $('#go').textContent = 'Go';
-    $('#prompt').placeholder = 'Ask for a picture…';
+    $('#prompt').placeholder = 'Say something to Muse…';
+  }
+}
+
+async function sendChat(prompt) {
+  const text = prompt.trim();
+  if (!text) {
+    setStatus('Write a line to Muse first.', true);
+    $('#prompt').focus();
+    return;
+  }
+  const file = $('#file').files && $('#file').files[0];
+  if (file) {
+    generate(text);
+    return;
+  }
+  state.busy = true;
+  $('#go').disabled = true;
+  $('#go').textContent = 'Thinking…';
+  $('#prompt').placeholder = 'Thinking…';
+  setStatus('Thinking…', false);
+  $('#museText').textContent = 'Asking Grok for the picture…';
+  try {
+    const body = {
+      message: text,
+      picture: true,
+      connection: state.connection,
+      aspect: state.aspect,
+      characterId: state.selectedId,
+      character: $('#fCharacter').value,
+      role: $('#fRole').value,
+      outfit: $('#fOutfit').value,
+      world: $('#fWorld').value,
+      tags: $('#fTags').value,
+    };
+    if (state.connection === 'direct' && state.key) body.key = state.key.trim();
+    const result = await api('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!result.ok) {
+      setStatus(result.error || 'Muse could not do that.', true);
+      return;
+    }
+    state.lastPrompt = result.item ? result.item.prompt : text;
+    state.shownId = result.item ? result.item.id : '';
+    state.filterTag = '';
+    state.filterGroup = '';
+    await loadAll();
+    if (result.item && result.item.pairingId) {
+      const index = state.pairings.findIndex((item) => item.id === result.item.pairingId);
+      if (index >= 0) state.loopIndex = index;
+      state.activePairingId = result.item.pairingId;
+      state.loopNote = '';
+      renderLoop();
+    }
+    showView('stage');
+    const where = result.source === 'bridge' ? 'the Hub bridge' : result.source === 'mock' ? 'practice mode' : result.source === 'direct' ? 'the direct API' : 'this desk';
+    setStatus(result.reply + (result.item ? ' This picture came through ' + where + '.' : ''), false);
+    $('#museText').textContent = result.reply;
+  } catch (error) {
+    setStatus(error.message || 'Something went wrong. Check the terminal, then try again.', true);
+  } finally {
+    state.busy = false;
+    $('#go').disabled = false;
+    $('#go').textContent = 'Go';
+    $('#prompt').placeholder = 'Say something to Muse…';
   }
 }
 
@@ -855,10 +958,19 @@ document.addEventListener('click', async (event) => {
     renderCast();
     return;
   }
-  if (event.target.closest('#castCancel') || event.target.closest('#cardCancel')) {
+  if (event.target.closest('#castCancel')) {
     state.draft = null;
     state.deleteArm = '';
     loadAll().then(() => showView('stage'));
+    return;
+  }
+  if (event.target.closest('#castEdit')) {
+    const current = reel()[state.castIndex];
+    if (!current) return;
+    state.selectedId = current.id;
+    state.draft = null;
+    state.deleteArm = '';
+    showView('card');
     return;
   }
   if (event.target.closest('#castNew') || event.target.closest('#cardNew')) {
@@ -877,39 +989,7 @@ document.addEventListener('click', async (event) => {
     else choosePerson(current);
     return;
   }
-  const kind = event.target.closest('[data-kind]');
-  if (kind && state.view === 'card') {
-    const person = cardPerson();
-    if (person) {
-      person.kind = kind.dataset.kind;
-      if (!person.role || person.role === 'Companion' || person.role === 'Persona') {
-        person.role = person.kind === 'persona' ? 'Persona' : 'Companion';
-      }
-      renderCard();
-    }
-    return;
-  }
-  if (event.target.closest('#accept')) {
-    acceptCard();
-    return;
-  }
-  if (event.target.closest('#dropCard')) {
-    const person = cardPerson();
-    if (!person || !person.id) return;
-    if (state.deleteArm !== person.id) {
-      state.deleteArm = person.id;
-      renderCard();
-      return;
-    }
-    await api('/api/cast/' + person.id, { method: 'DELETE' });
-    if (state.selectedId === person.id) state.selectedId = '';
-    state.draft = null;
-    state.deleteArm = '';
-    await loadAll();
-    showView('cast');
-    renderCast();
-    return;
-  }
+  if (event.target.closest('#crForm')) return;
   const connection = event.target.closest('[data-connection]');
   if (connection) {
     state.connection = connection.dataset.connection;
@@ -954,13 +1034,13 @@ document.addEventListener('click', async (event) => {
 
 $('#composer').addEventListener('submit', (event) => {
   event.preventDefault();
-  generate($('#prompt').value);
+  sendChat($('#prompt').value);
 });
 
 $('#prompt').addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    generate($('#prompt').value);
+    sendChat($('#prompt').value);
   }
 });
 

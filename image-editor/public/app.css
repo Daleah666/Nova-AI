@@ -629,8 +629,48 @@ input, textarea {
 .pair-lib-card h2 { font-family: var(--f-head); font-weight: 500; margin: 4px 0; }
 .pair-lib-card .crow { margin-bottom: 6px; }
 .pair-lib-card .crow .hint { margin-right: auto; }
+.chat-log { max-width: 680px; margin: 0 auto 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-log .line { margin: 0; padding: 8px 12px; border-radius: 14px; background: var(--box2); border: 1px solid var(--edge); }
+.chat-log .line.you { border-color: color-mix(in srgb, var(--cyan) 45%, transparent); }
+.chat-log .line.muse { border-color: color-mix(in srgb, var(--pink) 45%, transparent); }
+.chat-log b { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 6px; }
+.creator { max-width: 980px; margin: 0 auto; }
+.cr-head, .cr-form { display: flex; flex-direction: column; gap: 8px; }
+.cr-title { display: flex; align-items: baseline; gap: 8px; }
+.cr-title b { font-family: var(--f-head); font-weight: 500; }
+.cr-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cr-body { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 14px; align-items: start; }
+.cr-nav { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; }
+.cr-nav a { color: var(--muted); text-decoration: none; font-size: 0.82rem; padding: 4px 0; }
+.cr-sec, .cr-card { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 10px 12px 12px; }
+.cr-sec summary { cursor: pointer; }
+.cr-sec h3, .cr-sechead h3 { margin: 0; font-size: 1rem; }
+.cr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.cr-field { display: flex; flex-direction: column; gap: 4px; }
+.cr-field.wide { grid-column: 1 / -1; }
+.cr-field.excluded { opacity: 0.55; }
+.cr-lbl { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 0.82rem; }
+.cc-name { font-family: var(--f-head); font-size: 1.4rem; }
+.cc-tagline, .cc-info, .small-note, .muted { color: var(--muted); }
+.cc-info, .cc-tags, .tag-row, .archs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag-cats { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.tagchip { border: 1px solid var(--tc, var(--edge2)); color: var(--text); border-radius: 999px; padding: 2px 8px; font-size: 0.78rem; background: color-mix(in srgb, var(--tc, var(--glass)) 18%, transparent); }
+.tagchip.on button, .tagchip button { border: 0; background: none; color: var(--muted); padding: 0 0 0 4px; }
+.tagchip.sugg { background: none; }
+.tag-in { width: 7rem; border-radius: 999px; }
+.cr-traits { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.trait { display: grid; grid-template-columns: 7rem 1fr 7rem; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+.lore { display: grid; gap: 6px; margin: 8px 0; padding-bottom: 8px; border-bottom: 1px solid var(--edge); }
+.tg-msgs { margin: 8px 0 0; padding-left: 18px; }
+.check { display: flex; gap: 8px; align-items: center; }
+.out { color: var(--faint); }
 @media (prefers-reduced-motion: reduce) {
   .loop-progress i { animation: none; width: 100%; }
+  .motion-track { animation: none; }
+}
+@media (max-width: 800px) {
+  .cr-body, .cr-grid { grid-template-columns: 1fr; }
+  .cr-nav { position: static; flex-direction: row; flex-wrap: wrap; }
 }
 .hidden { display: none !important; }
 @media (max-width: 800px) {

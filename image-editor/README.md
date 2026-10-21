@@ -113,6 +113,30 @@ Before you have any pictures, the loop shows a short explanation and an example 
 
 Practice mode files pictures into this loop the same way. Nothing is uploaded.
 
+Under a character, the cast row does not keep a still portrait. If that character has two or more pictures, those frames play as a short moving strip. One picture stays in Memory and in the loop. It is not stacked under the cast.
+
+## Chat with Muse
+
+The stage is a chat. Type a line and press **Go**. Muse answers on the stage and, unless you were changing a picture you already have, files a new picture with the open card’s lists. That picture joins the idol loop, so the pairing click still opens the pictures that used those same lists.
+
+An agent on this computer can send that same turn without the page. This uses the card you saved last:
+
+```bash
+curl -s -X POST http://127.0.0.1:8787/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"A quiet portrait in the rain","picture":true}'
+```
+
+To name the card, put its id in the same JSON as `"characterId":"PASTE_THE_ID"`. The id is in `http://127.0.0.1:8787/api/cast`. Leave out role, outfit, world, and tags. Muse then uses the lists saved on that card. The reply has `item.url` and `item.outfit` (and the other lists). Open Memory and click that outfit, or click the pairing in the idol loop, and the picture is there.
+
+`"picture":false` keeps the line and does not make a picture. `"connection":"bridge"` asks My Hub to make it, the same Hub bridge as the page. Anything else uses the direct xAI API.
+
+With `IMAGE_EDITOR_MOCK=1`, this files a practice picture on this computer and does not call xAI. With a real `XAI_API_KEY` and practice mode off, the same command calls xAI for the picture. Muse’s short spoken line uses that same key and the chat model `grok-4.7` (change it with `XAI_CHAT_MODEL`). If the spoken line cannot be reached, the picture is still filed and Muse uses a local sentence.
+
+## The character card
+
+**Card**, or **Edit card** on the cast, opens the Character Creator. That menu is the beta creator from My Hub’s Familiar app (`hub/apps/familiar.html` on the Hub branch): Quick or Full, the same sections (Identity, Look, Personality, Voice, Backstory, Heart, You & her, AI notes, RPG, Extras), the same tag categories, and the SillyTavern card JSON. **Accept** writes that sheet onto this desk. The next chat and the next picture use its name, role, outfit, world, and tags. Muse reads that same sheet. It is not a second form.
+
 ## Memory, the library
 
 Every picture that comes back is kept on this computer, in the `image-editor/data` folder. Git does not upload that folder. Each kept picture stores the image file, the prompt, the settings, the time, and the cast fields.
@@ -148,7 +172,7 @@ Start the editor again. Direct API draws a stand-in picture on your computer and
 ## What is in this folder
 
 - `server.mjs` — the small program. It serves the page, asks for the picture, and files what comes back.
-- `public/` — the page you use (`index.html`, `app.css`, `app.js`).
+- `public/` — the page you use (`index.html`, `app.css`, `app.js`, `creator.js`).
 - `data/` — the cast and the kept pictures, after you make some. Git does not upload it.
 - `.env.example` — the list of settings, with no real secrets.
 - `.env` — your copy, after you create it. Git does not upload it.

@@ -15,6 +15,7 @@ const PUBLIC = join(ROOT, 'public');
 const DATA = join(ROOT, 'data');
 const LIBRARY = join(DATA, 'library');
 const CAST_FILE = join(DATA, 'cast.json');
+const CHAT_FILE = join(DATA, 'chat.json');
 const MODEL_DEFAULT = 'grok-imagine-image-2.0';
 const KEY_OK = /^xai-[A-Za-z0-9_-]{20,}$/;
 const ASPECT_OK = /^\d+:\d+$/;
@@ -296,25 +297,199 @@ function writeCast(list) {
   renameSync(tmp, CAST_FILE);
 }
 
+const SHEET_ROOT = ['name', 'kind', 'role', 'world', 'persona', 'want', 'cost', 'appearance', 'scenario', 'firstMessage', 'userName', 'systemNotes', 'authorNote'];
+const SHEET_PROFILE = ['tagline', 'nickname', 'age', 'pronouns', 'species', 'occupation', 'height', 'bodyType', 'bust', 'marks', 'outfit', 'palette', 'artStyle', 'quirks', 'speech', 'catchphrases', 'examples', 'origin', 'upbringing', 'secret', 'fears', 'goals', 'likes', 'dislikes', 'hobbies', 'relationship', 'dynamic', 'boundaries', 'rpgClass', 'race', 'level', 'alignment', 'abilities', 'equipment', 'weakness'];
+const SHEET_TAGS = ['genre', 'personality', 'role', 'setting', 'species', 'rating', 'custom'];
+const TRAIT_KEYS = ['bold', 'sassy', 'chaos', 'playful', 'affection'];
+
+function blankSheet(kind) {
+  const persona = kind === 'persona';
+  return {
+    name: persona ? 'New persona' : 'New character',
+    kind: persona ? 'persona' : 'companion',
+    role: persona ? 'Persona' : 'Companion',
+    world: '',
+    persona: '',
+    want: '',
+    cost: '',
+    appearance: '',
+    scenario: '',
+    firstMessage: '',
+    userName: '',
+    systemNotes: '',
+    authorNote: '',
+    quickLines: [],
+    checkinLines: [],
+    profile: {
+      tagline: '', nickname: '', age: '', pronouns: '', species: '', occupation: '',
+      height: '', bodyType: '', bust: '', marks: '', outfit: '', palette: '', artStyle: '',
+      quirks: '', speech: '', catchphrases: '', examples: '', origin: '', upbringing: '',
+      secret: '', fears: '', goals: '', likes: '', dislikes: '', hobbies: '',
+      relationship: '', dynamic: '', boundaries: '',
+      rpgOn: false, rpgClass: '', race: '', level: '', alignment: '', abilities: '', equipment: '', weakness: '',
+      traits: { bold: 50, sassy: 50, chaos: 50, playful: 50, affection: 50 },
+      archetypes: [],
+    },
+    tags: { genre: [], personality: [], role: [], setting: [], species: [], rating: [], custom: [] },
+    exclude: {},
+    lorebook: [],
+  };
+}
+
+function sheetFromFlat(person) {
+  const sheet = blankSheet(person && person.kind);
+  if (!person) return sheet;
+  sheet.name = person.name || sheet.name;
+  sheet.kind = person.kind === 'persona' ? 'persona' : 'companion';
+  sheet.role = person.role || sheet.role;
+  sheet.world = person.world || '';
+  sheet.profile.outfit = person.outfit || '';
+  sheet.profile.tagline = person.one || '';
+  sheet.tags.custom = tagList(person.tags);
+  return sheet;
+}
+
+function lineList(value) {
+  const raw = Array.isArray(value) ? value : String(value || '').split('\n');
+  return raw.map((line) => clean(line, 160)).filter(Boolean).slice(0, 12);
+}
+
+function cleanAge(value) {
+  const text = clean(value, 8);
+  if (!text) return '';
+  const n = Number(text);
+  if (!Number.isFinite(n)) return '';
+  return String(Math.max(18, Math.min(120, Math.round(n))));
+}
+
+function normalizeSheet(input, fallbackKind) {
+  const sheet = blankSheet(fallbackKind);
+  const src = input && typeof input === 'object' ? input : {};
+  for (const key of SHEET_ROOT) {
+    if (key === 'kind') sheet.kind = src.kind === 'persona' ? 'persona' : 'companion';
+    else if (key === 'name') sheet.name = clean(src.name, 80) || sheet.name;
+    else if (key === 'role') sheet.role = clean(src.role, 80);
+    else if (key === 'world') sheet.world = clean(src.world, 160);
+    else sheet[key] = clean(src[key], key === 'appearance' || key === 'persona' || key === 'scenario' || key === 'firstMessage' || key === 'systemNotes' || key === 'authorNote' ? 2000 : 240);
+  }
+  if (!sheet.role) sheet.role = sheet.kind === 'persona' ? 'Persona' : 'Companion';
+  const profile = src.profile && typeof src.profile === 'object' ? src.profile : {};
+  for (const key of SHEET_PROFILE) {
+    sheet.profile[key] = key === 'age' ? cleanAge(profile[key]) : clean(profile[key], key === 'examples' || key === 'abilities' || key === 'equipment' || key === 'quirks' || key === 'speech' ? 2000 : 240);
+  }
+  sheet.profile.rpgOn = Boolean(profile.rpgOn);
+  const traits = profile.traits && typeof profile.traits === 'object' ? profile.traits : {};
+  for (const key of TRAIT_KEYS) {
+    const n = Number(traits[key]);
+    sheet.profile.traits[key] = Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 50;
+  }
+  sheet.profile.archetypes = tagList(profile.archetypes).slice(0, 3);
+  const tags = src.tags && typeof src.tags === 'object' ? src.tags : {};
+  for (const key of SHEET_TAGS) sheet.tags[key] = tagList(tags[key]);
+  const exclude = src.exclude && typeof src.exclude === 'object' ? src.exclude : {};
+  for (const key of Object.keys(exclude)) {
+    if (exclude[key]) sheet.exclude[clean(key, 40)] = true;
+  }
+  sheet.quickLines = lineList(src.quickLines);
+  sheet.checkinLines = lineList(src.checkinLines);
+  const lore = Array.isArray(src.lorebook) ? src.lorebook : [];
+  sheet.lorebook = lore.slice(0, 20).map((entry) => ({
+    title: clean(entry && entry.title, 80),
+    keys: tagList(entry && entry.keys),
+    content: clean(entry && entry.content, 2000),
+    always: Boolean(entry && entry.always),
+  })).filter((entry) => entry.title || entry.content);
+  return sheet;
+}
+
+function listsFromSheet(sheet) {
+  const custom = sheet.tags.custom || [];
+  const extra = ['genre', 'personality', 'species', 'rating'].flatMap((key) => sheet.tags[key] || []);
+  const roleTag = (sheet.tags.role || [])[0] || '';
+  const setting = (sheet.tags.setting || [])[0] || '';
+  return {
+    name: sheet.name,
+    kind: sheet.kind,
+    role: sheet.role || roleTag || (sheet.kind === 'persona' ? 'Persona' : 'Companion'),
+    outfit: sheet.profile.outfit || '',
+    world: sheet.world || setting,
+    one: sheet.profile.tagline || '',
+    tags: tagList(custom.concat(extra)),
+  };
+}
+
+function applyFlat(sheet, body) {
+  if (body.name != null && clean(body.name, 80)) sheet.name = clean(body.name, 80);
+  if (body.kind === 'persona' || body.kind === 'companion') sheet.kind = body.kind;
+  if (body.role != null && clean(body.role, 80)) sheet.role = clean(body.role, 80);
+  if (body.outfit != null) sheet.profile.outfit = clean(body.outfit, 120);
+  if (body.world != null) sheet.world = clean(body.world, 160);
+  if (body.one != null) sheet.profile.tagline = clean(body.one, 160);
+  if (body.tags != null) sheet.tags.custom = tagList(body.tags);
+  if (!sheet.role) sheet.role = sheet.kind === 'persona' ? 'Persona' : 'Companion';
+  return sheet;
+}
+
 function castFields(body, previous) {
-  const kind = body.kind === 'persona' ? 'persona' : 'companion';
-  const name = clean(body.name, 80) || (previous && previous.name) || (kind === 'persona' ? 'New persona' : 'New character');
-  const role = clean(body.role, 80) || (kind === 'persona' ? 'Persona' : 'Companion');
+  const fallback = previous && previous.sheet ? previous.sheet : sheetFromFlat(previous);
+  let sheet = normalizeSheet(fallback, body && body.kind);
+  if (body && body.sheet && typeof body.sheet === 'object') sheet = normalizeSheet({ ...sheet, ...body.sheet, profile: { ...sheet.profile, ...(body.sheet.profile || {}) }, tags: { ...sheet.tags, ...(body.sheet.tags || {}) } }, sheet.kind);
+  else if (body) sheet = applyFlat(sheet, body);
+  const lists = listsFromSheet(sheet);
   return {
     id: previous ? previous.id : nid('c'),
-    name,
-    kind,
-    role,
-    outfit: clean(body.outfit, 120),
-    world: clean(body.world, 160),
-    one: clean(body.one, 160),
-    tags: tagList(body.tags),
+    name: lists.name,
+    kind: lists.kind,
+    role: lists.role,
+    outfit: lists.outfit,
+    world: lists.world,
+    one: lists.one,
+    tags: lists.tags,
+    sheet,
     createdAt: previous ? previous.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 }
 
+function familiarCard(person) {
+  const sheet = person.sheet || sheetFromFlat(person);
+  const tags = SHEET_TAGS.flatMap((key) => (sheet.tags && sheet.tags[key]) || []);
+  const description = [sheet.persona, sheet.appearance ? 'Appearance: ' + sheet.appearance : ''].filter(Boolean).join('\n\n');
+  return {
+    spec: 'chara_card_v2',
+    spec_version: '2.0',
+    data: {
+      name: sheet.name,
+      description,
+      personality: [sheet.profile && sheet.profile.tagline, sheet.want && 'Want: ' + sheet.want, sheet.cost && 'Cost: ' + sheet.cost].filter(Boolean).join('\n'),
+      scenario: sheet.scenario || '',
+      first_mes: sheet.firstMessage || '',
+      mes_example: (sheet.profile && sheet.profile.examples) || '',
+      creator_notes: (sheet.profile && sheet.profile.tagline) || '',
+      system_prompt: sheet.systemNotes || '',
+      post_history_instructions: sheet.authorNote || '',
+      tags: tags.length ? tags : ['familiar'],
+      creator: sheet.userName || '',
+      character_version: '1',
+      extensions: {
+        familiar: {
+          kind: sheet.kind,
+          role: person.role,
+          world: person.world,
+          persona: sheet.persona,
+          appearance: sheet.appearance,
+          outfit: person.outfit,
+          profile: sheet.profile,
+          tags: sheet.tags,
+          exclude: sheet.exclude || {},
+        },
+      },
+    },
+  };
+}
+
 function publicCast(person) {
+  const sheet = person.sheet || sheetFromFlat(person);
   return {
     id: person.id,
     name: person.name,
@@ -324,8 +499,171 @@ function publicCast(person) {
     world: person.world,
     one: person.one,
     tags: person.tags || [],
+    sheet,
+    card: familiarCard({ ...person, sheet }),
     createdAt: person.createdAt,
     updatedAt: person.updatedAt,
+  };
+}
+
+function readChat() {
+  if (!existsSync(CHAT_FILE)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(CHAT_FILE, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeChat(turns) {
+  const tmp = CHAT_FILE + '.tmp';
+  writeFileSync(tmp, JSON.stringify(turns.slice(-200), null, 2));
+  renameSync(tmp, CHAT_FILE);
+}
+
+function publicTurn(turn) {
+  return {
+    id: turn.id,
+    role: turn.role,
+    text: turn.text,
+    at: turn.at,
+    characterId: turn.characterId || '',
+    character: turn.character || '',
+    itemId: turn.itemId || '',
+  };
+}
+
+function resolvePerson(body) {
+  const list = readCast().map((person) => person.sheet ? person : { ...person, sheet: sheetFromFlat(person) });
+  const requested = clean(body.characterId, 40);
+  if (requested) {
+    if (!ID_OK.test(requested)) return { error: 'That character id is not one this desk saved.' };
+    const found = list.find((person) => person.id === requested);
+    return found ? { person: found } : { error: 'That character is not in the cast.' };
+  }
+  const name = clean(body.character || body.name, 80).toLowerCase();
+  if (name) {
+    const found = list.find((person) => person.name.toLowerCase() === name);
+    if (found) return { person: found };
+  }
+  if (!list.length) return { person: null };
+  const newest = list.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0];
+  return { person: newest };
+}
+
+function kept(sheet, key) {
+  return !(sheet.exclude && sheet.exclude[key]);
+}
+
+function musePrompt(person, message) {
+  const line = clean(message, 4000);
+  if (!person) return line;
+  const sheet = person.sheet || sheetFromFlat(person);
+  const parts = [];
+  if (kept(sheet, 'name') && person.name) parts.push(person.name);
+  if (kept(sheet, 'appearance') && sheet.appearance) parts.push(sheet.appearance);
+  if (kept(sheet, 'outfit') && person.outfit) parts.push('Outfit: ' + person.outfit);
+  if (kept(sheet, 'world') && person.world) parts.push('Setting: ' + person.world);
+  if (kept(sheet, 'artStyle') && sheet.profile && sheet.profile.artStyle) parts.push(sheet.profile.artStyle);
+  parts.push(line);
+  return parts.map((part) => String(part).trim().replace(/[.\s]+$/, '')).filter(Boolean).join('. ') + '.';
+}
+
+function localMuse(person, filed) {
+  const name = person && person.name ? person.name : 'the stage';
+  if (!filed) return 'Heard. I did not file a picture on this turn.';
+  return 'Filed a picture for ' + name + '. Memory can filter it with this card’s lists.';
+}
+
+async function grokChat(system, user, key) {
+  const model = String(process.env.XAI_CHAT_MODEL || 'grok-4.7').slice(0, 80);
+  try {
+    const response = await fetch(apiBase() + '/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({
+        model,
+        temperature: 0.4,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    const json = await response.json().catch(() => ({}));
+    const text = json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+    if (!response.ok || !text) return '';
+    return clean(text, 500);
+  } catch {
+    return '';
+  }
+}
+
+async function chatTurn(message) {
+  const text = clean(message.message || message.text || message.prompt, 4000);
+  if (!text) return { ok: false, error: 'Write a line to Muse first.' };
+  const resolved = resolvePerson(message);
+  if (resolved.error) return { ok: false, error: resolved.error };
+  const person = resolved.person;
+  const wantPicture = message.picture !== false && message.picture !== 'false';
+  const connection = message.connection === 'bridge' ? 'bridge' : 'direct';
+  const listed = {
+    character: clean(message.character, 80) || (person ? person.name : ''),
+    characterId: person ? person.id : '',
+    role: clean(message.role, 80) || (person ? person.role : ''),
+    outfit: clean(message.outfit, 120) || (person ? person.outfit : ''),
+    world: clean(message.world, 160) || (person ? person.world : ''),
+    tags: tagList(message.tags).length ? tagList(message.tags) : (person ? person.tags : []),
+  };
+  let item = null;
+  let source = '';
+  if (wantPicture) {
+    const made = await generate({
+      prompt: musePrompt(person ? { ...person, name: listed.character, outfit: listed.outfit, world: listed.world, role: listed.role } : null, text),
+      line: text,
+      connection,
+      aspect: message.aspect,
+      mode: 'generate',
+      key: message.key,
+      character: listed.character,
+      characterId: listed.characterId,
+      role: listed.role,
+      outfit: listed.outfit,
+      world: listed.world,
+      tags: listed.tags,
+    });
+    if (!made.ok) return made;
+    item = made.item;
+    source = made.source;
+  }
+  let reply = '';
+  const key = connection === 'direct' && !MOCK ? envKey() || (KEY_OK.test(message.key || '') ? message.key.trim() : '') : '';
+  if (key && wantPicture) {
+    const who = person ? person.name : 'the stage';
+    reply = await grokChat(
+      'You are Muse on the Duet Stage picture desk. Answer in one or two short sentences about the picture you just filed. Name the character. Do not roleplay.',
+      'Character: ' + who + (person && person.outfit ? '. Outfit: ' + person.outfit : '') + (person && person.world ? '. World: ' + person.world : '') + '. The user asked: ' + text,
+      key,
+    );
+  }
+  if (!reply) reply = localMuse(person, wantPicture);
+  const at = new Date().toISOString();
+  const userTurn = { id: nid('t').slice(0, 24), role: 'user', text, at, characterId: person ? person.id : '', character: person ? person.name : '', itemId: '' };
+  const museTurn = { id: nid('t').slice(0, 24), role: 'muse', text: reply, at: new Date().toISOString(), characterId: person ? person.id : '', character: person ? person.name : '', itemId: item ? item.id : '' };
+  await locked(() => {
+    const turns = readChat();
+    turns.push(userTurn, museTurn);
+    writeChat(turns);
+  });
+  return {
+    ok: true,
+    reply,
+    source,
+    item,
+    person: person ? publicCast(person) : null,
+    turns: [publicTurn(userTurn), publicTurn(museTurn)],
   };
 }
 
@@ -489,6 +827,7 @@ function saveGeneration(message, result) {
         source: result.source || '',
         mode: message.mode === 'edit' ? 'edit' : 'generate',
         revised: clean(result.revised, 500),
+        line: clean(message.line, 500),
       },
       file,
     };
@@ -644,7 +983,7 @@ const server = createServer(async (req, res) => {
         const list = readCast();
         const index = list.findIndex((item) => item.id === id);
         if (index < 0) return null;
-        list[index] = castFields({ ...list[index], ...body }, list[index]);
+        list[index] = castFields(body, list[index]);
         writeCast(list);
         return list[index];
       });
@@ -661,6 +1000,21 @@ const server = createServer(async (req, res) => {
         return true;
       });
       return send(res, gone ? 200 : 404, gone ? { ok: true } : { ok: false, error: 'That character is not in the cast.' });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/chat') {
+      const characterId = clean(url.searchParams.get('characterId'), 40);
+      const turns = readChat().filter((turn) => !characterId || turn.characterId === characterId).map(publicTurn);
+      return send(res, 200, { ok: true, turns });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/chat') {
+      let message;
+      try {
+        message = await readJson(req);
+      } catch (error) {
+        const tooBig = error && error.code === 'too-big';
+        return send(res, 400, { ok: false, error: tooBig ? 'That line is too big to send.' : 'The page sent something this editor could not read. Refresh and try again.' });
+      }
+      return send(res, 200, await chatTurn(message));
     }
     if (req.method === 'POST' && url.pathname === '/api/generate') {
       let message;
