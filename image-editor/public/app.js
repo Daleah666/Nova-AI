@@ -45,7 +45,8 @@ function selected() {
 
 function pictureCount(person) {
   const name = person.name.toLowerCase();
-  return state.library.filter((item) => (item.character || '').toLowerCase() === name || item.characterId === person.id).length;
+  const items = state.libraryAll || state.library;
+  return items.filter((item) => (item.character || '').toLowerCase() === name || item.characterId === person.id).length;
 }
 
 function visibleCast() {
@@ -120,7 +121,7 @@ function renderMe() {
 
 function renderLatest() {
   const q = $('#sQ').value.trim().toLowerCase();
-  const items = state.library.filter((item) => {
+  const items = (state.libraryAll || state.library).filter((item) => {
     if (!q) return true;
     return [item.prompt, item.character, item.role, item.outfit, item.world, ...(item.tags || [])].join(' ').toLowerCase().includes(q);
   }).slice(0, 8);

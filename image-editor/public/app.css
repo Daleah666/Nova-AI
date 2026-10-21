@@ -136,7 +136,20 @@ input, textarea {
   flex: none;
 }
 .sib:hover { background: var(--glass2); color: var(--text); }
-#sQ { margin: 0 2px 4px; border-radius: 10px; padding: 7px 10px; font-size: 0.84rem; }
+.search { position: relative; margin: 0 2px 4px; }
+#sQ { border-radius: 10px; padding: 7px 64px 7px 10px; font-size: 0.84rem; }
+.search kbd {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  color: var(--faint);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  padding: 1px 5px;
+  pointer-events: none;
+}
 .snav { display: flex; flex-direction: column; gap: 1px; }
 .snav button, .smore button {
   display: flex;
@@ -410,7 +423,7 @@ input, textarea {
 .spin.next { right: 28px; }
 .cast-filters { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 18vh; }
 .cast-filters button[aria-pressed="true"] { background: var(--text); color: #14120c; }
-.cast-filters input { width: 140px; border-radius: 999px; }
+.cast-filters input { width: 168px; flex: none; border-radius: 999px; }
 .portrait {
   width: 148px;
   height: 210px;
