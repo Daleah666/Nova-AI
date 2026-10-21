@@ -1,6 +1,6 @@
 # Easy image editor
 
-This is a small page on your own computer. You type what you want to see, press **Generate**, and a picture shows up.
+This is a small page on your own computer. You type what you want to see, press **Go**, and a picture shows up. The page looks like Duet Stage: the cast on the left, the stage in the middle, and the pictures you keep in Memory.
 
 It uses the **same Grok picture API** My Hub already uses (xAI, model `grok-imagine-image-2.0`). You can connect in either of these ways:
 
@@ -59,7 +59,7 @@ node server.mjs
 
 http://127.0.0.1:8787/
 
-6. Leave **Direct API** selected. Type a prompt. Press **Generate**. The first picture can take a little while. When it appears, press **Save picture**.
+6. Leave **Direct API** selected (it is under **More → Settings**). Type a prompt on the stage. Press **Go**. The first picture can take a little while. The page says **Thinking…** while it waits. When the picture lands, it is already filed in **Memory**.
 
 If you would rather not put the key in `.env`, leave that line empty, start the editor, and paste the key into the box on the page. The box is only for Direct API.
 
@@ -86,13 +86,28 @@ You can skip the xAI key in this folder when you use the bridge.
 
 3. Open http://127.0.0.1:8787/
 
-4. Choose **Hub bridge**. The page should say that My Hub is running and already has a Grok key.
+4. Open **More → Settings** and choose **Hub bridge**. The page should say that My Hub is running and already has a Grok key. The bridge address has to be this computer (`http://127.0.0.1:8080` unless you set `HUB_BRIDGE_URL` or `BRIDGE_BASE_URL`).
 
-5. Type a prompt and press **Generate**.
+5. Type a prompt and press **Go**.
+
+## Cast, the card, and tags
+
+The page is laid out like Duet Stage: a dark stage, the cast carousel, and the character card.
+
+1. Open **Cast**. The big word **New** means a new character. Press **Create**.
+2. Fill the card: name, **Companion** or **Persona**, role, outfit, world, and any extra tags. Press **Accept**.
+3. Press **Choose** on that character. The next picture keeps those fields.
+4. You can still edit the little chips under the prompt before you press **Go**. Those chips are the character, the role / cast, the outfit, the world, and free tags.
+
+## Memory, the library
+
+Every picture that comes back is kept on this computer, in the `image-editor/data` folder. Git does not upload that folder. Each kept picture stores the image file, the prompt, the settings, the time, and the cast fields.
+
+Open **Memory** to see them. Click a tag, such as **Outfit · red cloak**, to show only pictures with that tag. Click **Everyone** to show them all again. The search box at the top filters this list too.
 
 ## Change a picture you already have
 
-Under **Optional picture to change**, choose a PNG, JPEG, or WebP. Then write what you want changed, and press **Generate**. The editor sends that picture to the same Grok edit call My Hub uses.
+Press **Change a picture**, choose a PNG, JPEG, or WebP, write what you want changed, and press **Go**. The editor sends that picture to the same Grok edit call My Hub uses.
 
 ## Practice mode (no key, no picture from Grok)
 
@@ -118,7 +133,10 @@ Start the editor again. Direct API draws a stand-in picture on your computer and
 
 ## What is in this folder
 
-- `server.mjs` — the small program. It serves the page and makes the picture request.
-- `public/index.html` — the page you use.
+- `server.mjs` — the small program. It serves the page, asks for the picture, and files what comes back.
+- `public/` — the page you use (`index.html`, `app.css`, `app.js`).
+- `data/` — the cast and the kept pictures, after you make some. Git does not upload it.
 - `.env.example` — the list of settings, with no real secrets.
 - `.env` — your copy, after you create it. Git does not upload it.
+
+Direct pictures go to `https://api.x.ai` unless you set `IMAGE_API_BASE_URL`. The model line is `XAI_IMAGE_MODEL`. Leave both off unless you were told to change them.
