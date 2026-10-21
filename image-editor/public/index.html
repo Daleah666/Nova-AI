@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Easy image editor</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #2a241c;
+      --muted: #5e564c;
+      --line: #e4d8c6;
+      --paper: #fffaf3;
+      --page: #f3ecdf;
+      --teal: #2f6f62;
+      --teal-dark: #24574d;
+      --warn: #8a4b1f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", Palatino, serif;
+      color: var(--ink);
+      background: var(--page);
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    h1 { font-size: 2rem; margin: 0 0 8px; }
+    p { line-height: 1.45; }
+    .lead { color: var(--muted); margin-top: 0; }
+    form, .result {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    fieldset {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin: 0 0 16px;
+    }
+    legend { padding: 0 6px; }
+    label { display: block; margin: 12px 0; font-weight: 600; }
+    .choice { font-weight: 500; }
+    input[type="text"], input[type="password"], textarea, select, input[type="file"] {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      font: 16px/1.4 system-ui, sans-serif;
+      color: var(--ink);
+      background: white;
+      border: 1px solid #d9ccb8;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    button, .save {
+      font: 600 17px/1 system-ui, sans-serif;
+      background: var(--teal);
+      color: white;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    button:hover, .save:hover { background: var(--teal-dark); }
+    button:disabled { opacity: 0.6; }
+    .help, #status, .note { color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.95rem; }
+    #status { min-height: 1.4em; }
+    #status.error { color: var(--warn); }
+    .banner {
+      background: #fff4d8;
+      border: 1px solid #e6d39a;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+    }
+    .result { margin-top: 18px; }
+    img {
+      display: none;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      background: #efe6d6;
+    }
+    img.show { display: block; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Easy image editor</h1>
+    <p class="lead">Type what you want to see, then press Generate. This uses the same Grok picture API as My Hub. Connect directly with your xAI key, or ask the Hub bridge to do it if My Hub is already running.</p>
+    <p id="banner" class="banner hidden"></p>
+    <form id="form">
+      <fieldset>
+        <legend>How to connect</legend>
+        <label class="choice"><input type="radio" name="connection" value="direct" checked> Direct API — this editor talks to xAI</label>
+        <label class="choice"><input type="radio" name="connection" value="bridge"> Hub bridge — My Hub talks to xAI for you</label>
+        <p id="connHelp" class="help"></p>
+      </fieldset>
+      <label id="keyLabel">xAI key
+        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Leave blank if the key is already in .env">
+      </label>
+      <p class="help">Only needed for Direct API, and only if <code>.env</code> does not already have <code>XAI_API_KEY</code>. The key stays on this computer.</p>
+      <label>What should the picture show?
+        <textarea id="prompt" placeholder="A small clay fox reading a book by a sunny window"></textarea>
+      </label>
+      <label>Shape
+        <select id="aspect">
+          <option value="1:1">Square (1:1)</option>
+          <option value="16:9">Wide (16:9)</option>
+          <option value="9:16">Tall (9:16)</option>
+          <option value="4:3">Photo (4:3)</option>
+          <option value="3:4">Portrait (3:4)</option>
+        </select>
+      </label>
+      <label>Optional picture to change
+        <input id="file" type="file" accept="image/png,image/jpeg,image/webp">
+      </label>
+      <p class="help">Leave this empty to make a new picture. Choose a PNG, JPEG, or WebP if you want Grok to change a picture you already have.</p>
+      <div class="row">
+        <button id="go" type="submit">Generate</button>
+        <span id="status" role="status"></span>
+      </div>
+    </form>
+    <section class="result">
+      <img id="out" alt="The picture you generated">
+      <p id="revised" class="note hidden"></p>
+      <div class="row">
+        <a id="save" class="save hidden" download="picture.jpg">Save picture</a>
+      </div>
+    </section>
+  </main>
+  <script>
+    const form = document.querySelector('#form');
+    const promptBox = document.querySelector('#prompt');
+    const aspectBox = document.querySelector('#aspect');
+    const fileBox = document.querySelector('#file');
+    const keyBox = document.querySelector('#key');
+    const keyLabel = document.querySelector('#keyLabel');
+    const help = document.querySelector('#connHelp');
+    const status = document.querySelector('#status');
+    const banner = document.querySelector('#banner');
+    const button = document.querySelector('#go');
+    const image = document.querySelector('#out');
+    const revised = document.querySelector('#revised');
+    const save = document.querySelector('#save');
+
+    function connection() {
+      return form.querySelector('input[name="connection"]:checked').value;
+    }
+
+    function setStatus(text, isError) {
+      status.textContent = text || '';
+      status.classList.toggle('error', Boolean(isError));
+    }
+
+    function showConnection(info) {
+      const direct = connection() === 'direct';
+      keyLabel.classList.toggle('hidden', !direct);
+      if (!info) {
+        help.textContent = direct
+          ? 'Checking whether a key is already set…'
+          : 'Checking whether My Hub is running…';
+        return;
+      }
+      if (direct) {
+        help.textContent = info.direct
+          ? 'A key is already set on this computer (ends in ' + info.keyHint + '). You can leave the box blank.'
+          : 'No key in .env yet. Paste your xAI key above, or add XAI_API_KEY to .env and start the editor again.';
+      } else {
+        help.textContent = info.bridge ? info.bridge.detail : 'Checking the Hub bridge…';
+      }
+      if (info.mock) {
+        banner.textContent = 'Practice mode is on. Direct API draws a stand-in picture on this computer and does not call xAI. Set IMAGE_EDITOR_MOCK=0 in .env when you want a real picture.';
+        banner.classList.remove('hidden');
+      }
+    }
+
+    async function loadStatus() {
+      try {
+        const response = await fetch('/api/status', { cache: 'no-store' });
+        const info = await response.json();
+        showConnection(info);
+        return info;
+      } catch {
+        help.textContent = 'Could not reach the editor server. Leave the terminal window open and refresh this page.';
+        return null;
+      }
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Could not read that picture.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    form.addEventListener('change', () => loadStatus());
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const prompt = promptBox.value.trim();
+      if (!prompt) {
+        setStatus('Write what you want the picture to show first.', true);
+        promptBox.focus();
+        return;
+      }
+      const file = fileBox.files && fileBox.files[0];
+      if (file && file.size > 6 * 1024 * 1024) {
+        setStatus('That picture is too big to send. Try a smaller one.', true);
+        return;
+      }
+      button.disabled = true;
+      setStatus(file ? 'Changing your picture… this can take a little while.' : 'Making your picture… this can take a little while.', false);
+      try {
+        const body = {
+          connection: connection(),
+          prompt,
+          aspect: aspectBox.value,
+          mode: file ? 'edit' : 'generate',
+        };
+        if (connection() === 'direct' && keyBox.value.trim()) body.key = keyBox.value.trim();
+        if (file) body.image = await fileToDataUrl(file);
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) {
+          setStatus(result.error || 'The picture could not be made.', true);
+          return;
+        }
+        const src = result.images && result.images[0];
+        if (!src) {
+          setStatus('The picture came back empty. Try again.', true);
+          return;
+        }
+        image.src = src;
+        image.classList.add('show');
+        save.href = src;
+        save.download = src.startsWith('data:image/svg') ? 'picture.svg' : 'picture.jpg';
+        save.classList.remove('hidden');
+        if (result.revised) {
+          revised.textContent = 'Grok adjusted the wording to: ' + result.revised;
+          revised.classList.remove('hidden');
+        } else {
+          revised.textContent = '';
+          revised.classList.add('hidden');
+        }
+        const where = result.source === 'bridge' ? 'the Hub bridge' : result.source === 'mock' ? 'practice mode' : 'the direct API';
+        setStatus('Done. This picture came through ' + where + '.', false);
+      } catch (error) {
+        setStatus(error.message || 'Something went wrong. Check the terminal, then try again.', true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    loadStatus();
+  </script>
+</body>
+</html>
