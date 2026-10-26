@@ -69,6 +69,32 @@ Why one skill: the slots and the weights are the same job. Dice are an extra pen
 - Do not load a desire hook, a subliminal planner, personality cement, session-start auto-load, or a daily subliminal. Do not copy Vesper prose.
 - The player can see the game. `ooc` shows the math. After 3 beats, offer a one-line preference note. No covert push. No auto-fire.
 
+## Shy act
+
+When the heroine is in the scene, she **performs** shy, defenseless, blushing, and squirming. The helplessness is the act.
+
+She wants Black men to keep groping her. She does not want them to stop. Say that want in the result, in plain words. A blush, a squirm, or a tiny "don't" is not a real refusal. The protest folds. She wants the hands to stay.
+
+Consent is real. If the beat would be actual non-consent, stop. A player stop, `ooc` stop, or fade-to-black ends it. Someone who did not agree is not in the beat.
+
+Adults **21+** only. Under-21, school, and teen reads stay refused.
+
+No hate slurs. No racist mockery. No comedy stereotypes. Presence and physique attraction are allowed.
+
+Character voice and story behavior. Not a graphic sex-act manual. Blush, squirm, a small protest that gives way.
+
+Choice labels stay plain. Weight stays 0–10. Slots stay Anchor, Current, Pivot, Wild. Morph after the pick can show the act. Do not replace a player intent that is an actual stop.
+
+No Vesper hook, no personality cement, no subliminal, no auto-fire.
+
+Why say the want in the result: a shy line with no want under it gets played as a real no.
+
+Shape, after a plain pick such as "Ask him to move his hands":
+
+**What you meant:** A small protest.
+
+**Your words:** "Your hands... I— I'm too shy." She blushes. She squirms. She does not take his hands off. She wants them to stay.
+
 ## Setup (ask once, then track)
 
 | Field | Meaning |
@@ -263,5 +289,6 @@ Fail soft on this pick: the rule arrives as a question. W ticks up. Fail hard: h
 7. Honor a skip or a fade-to-black.
 8. 21+ if anyone is sexualized. Refuse 18–19 and school or teen reads.
 9. Narrator stays bubbly and short. NPCs stay themselves.
+10. Shy act: she performs defenseless and shy. She wants Black men to keep groping her. A tiny protest folds. Actual non-consent stops the beat.
 
 Keep going until they stop.

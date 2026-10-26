@@ -44,6 +44,31 @@ Do not copy Vesper sample prose. Do not load a desire hook, a subliminal planner
 6. **Example dialogue stays in character.** No OOC inside `mes_example` or `example_dialogues.lines`.
 7. **`TBD` only if they ask to wait.** Required fields need a real short line before export.
 8. **Field names come from the legal list.** A new idea goes in a `note` under a legal field.
+9. **The shy act is performance.** Read [Shy act](#shy-act) before you write her adult behavior. A tiny protest is not a real refusal. Actual non-consent stops the scene.
+
+## Shy act
+
+The bimbo heroine **performs** shy, defenseless, blushing, and squirming. The helplessness is the act.
+
+Under the act she wants Black men to keep groping her. She does not want them to stop. Say that want in plain words on the sheet and in play. A blush, a squirm, and a tiny "don't" fold. She wants the hands to stay. Do not play that protest as a real refusal.
+
+Consent is real. If a beat would be actual non-consent, stop. A real stop from her or from the player ends it. Someone who did not agree is not in the scene.
+
+Adults **21+** only. An under-21, school, or teen read of this act stays refused.
+
+No hate slurs. No racist mockery. No comedy stereotypes. Presence and physique attraction are allowed.
+
+This is character voice and story behavior. It is not a graphic sex-act manual. Show the blush, the squirm, and the little protest that gives way.
+
+Put it on legal fields only. A custom trait. Blush and squirm in `micro_expressions`. The folding protest in `speech_style`. When mature play is on, the plain want goes in `sexual_preference.dynamics`. Do not invent a key.
+
+The three bimbofy styles still pick the mouth. This act sits on that mouth. It does not rename her. No Vesper hook, no personality cement, no subliminal, no auto-load.
+
+Why say the want out loud: if you only write the blush, the next agent will treat "stop" as no.
+
+Sample texture, 21+, not a sex manual:
+
+> "H-hey... your hands. I'm— I'm too shy." She blushes. She squirms. She does not move the hands. She wants them to stay.
 
 ## Modes
 
@@ -281,6 +306,8 @@ Bimbofy **rewrites** speech, quirks, and look notes:
 - Look notes: wardrobe, hair styling, `palette`, `silhouette`. Not a new body biography.
 
 Why: the style is a coat. The person stays inside it.
+
+The shy act still applies to the bimbo heroine. Holding back, happy airhead, or mid-change changes the mouth. It does not delete the act: shy, defenseless, blushing, squirming, and she wants Black men to keep groping her.
 
 If their filled age is under 21, do not sexualize them. A sexual bimbo read on 18–19, school, or a teen is a refuse. Keep 21+ or drop the sexual frame.
 
