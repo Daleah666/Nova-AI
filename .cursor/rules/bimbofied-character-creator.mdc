@@ -1,0 +1,18 @@
+---
+description: >-
+  When the user wants a character, bot, NPC, or to bimbofy a character,
+  read skills/bimbofied-character-creator/SKILL.md before answering.
+alwaysApply: false
+---
+
+# Bimbofied character creator
+
+If the user wants a **character**, **bot**, **NPC**, or to **bimbofy** a character, read `skills/bimbofied-character-creator/SKILL.md` first and follow it.
+
+Person first. Then the bot wrap. One character. The helper sounds bubbly and still fills the sheet, the card, and the file paths.
+
+Field names are the bot-maker legal names in `skills/bimbofied-character-creator/references/required-fields.md`. Do not invent keys.
+
+Sexualized characters are 21 or older. If they ask for 18–19 or a school or teen read, refuse that and keep 21+.
+
+Do not load Vesper hooks, a subliminal planner, personality cement, or session-start auto-load.
