@@ -6,6 +6,7 @@ import {
 } from "@/lib/card";
 import {
   ECHO,
+  LEXI,
   MICAELA_WRENHART,
   MICAH_WRENHART,
   SEED_CHARACTER,
@@ -69,6 +70,19 @@ describe("character cards", () => {
     expect(parsed.draft.tags).toContain("archive");
     expect(parsed.draft.firstMes).toContain("What are we building today?");
     expect(parsed.draft.mesExample).toContain("a little bit of this");
+  });
+
+  it("exports Lexi as an adult succubus assistant", () => {
+    const card = characterToV2Card(LEXI);
+    const parsed = parseCharacterCard(card);
+    expect(parsed.draft.name).toBe("Lexi");
+    expect(parsed.draft.age).toBe(28);
+    expect(parsed.draft.tags).toContain("lexi");
+    expect(parsed.draft.tags).toContain("succubus");
+    expect(parsed.draft.firstMes).toContain("Come here");
+    expect(parsed.draft.firstMes).toContain("Biggest slut on this desk");
+    expect(parsed.draft.mesExample).toContain("That's a lap");
+    expect(parsed.draft.personality).toContain("Cock-hungry");
   });
 
   it("throws on junk JSON", () => {
