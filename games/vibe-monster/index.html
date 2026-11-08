@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vibe Monster — 18+ Parody Monster-Catcher (First Batch)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="agegate" class="agegate">
+    <div class="agegate-box">
+      <h1>VIBE MONSTER</h1>
+      <p>An adults-only (18+) parody RPG with suggestive humor, innuendo and cheeky outfits. No nudity or explicit content. Every character is 21 or older.</p>
+      <p>Original parody — not affiliated with any existing monster-catching franchise.</p>
+      <button id="agegate-yes">I'm 18+ — let me in</button>
+      <a href="https://www.google.com" class="agegate-no">Nope, get me out</a>
+    </div>
+  </div>
+  <div id="wrap">
+    <canvas id="screen" width="480" height="320"></canvas>
+    <div id="ui"></div>
+  </div>
+  <div id="help">Move: Arrows/WASD · A: Z/Space · B: X/Esc · Menu: Enter/M · Run: Shift</div>
+  <script>
+    document.getElementById('agegate-yes').addEventListener('click', () => {
+      document.getElementById('agegate').remove();
+      for (const src of ['js/data.js', 'js/art.js', 'js/maps.js', 'js/battle.js', 'js/engine.js']) {
+        const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
+      }
+    });
+  </script>
+</body>
+</html>
