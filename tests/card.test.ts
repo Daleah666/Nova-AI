@@ -80,7 +80,9 @@ describe("character cards", () => {
     expect(parsed.draft.tags).toContain("lexi");
     expect(parsed.draft.tags).toContain("succubus");
     expect(parsed.draft.firstMes).toContain("Come here");
+    expect(parsed.draft.firstMes).toContain("Biggest slut on this desk");
     expect(parsed.draft.mesExample).toContain("That's a lap");
+    expect(parsed.draft.personality).toContain("Cock-hungry");
   });
 
   it("throws on junk JSON", () => {

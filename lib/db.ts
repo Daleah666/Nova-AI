@@ -60,6 +60,16 @@ async function ensureSeed() {
           .get(character.id),
       );
       if (existing) {
+        if (character.id === "seed-lexi") {
+          const refresh = db.transaction(CHAR_STORE, "readwrite");
+          refresh.objectStore(CHAR_STORE).put({
+            ...character,
+            createdAt: existing.createdAt || now,
+            updatedAt: now,
+          });
+          await txDone(refresh);
+          continue;
+        }
         const nextAvatar = character.avatarDataUrl;
         const prevAvatar = existing.avatarDataUrl;
         if (
