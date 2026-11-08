@@ -27,7 +27,12 @@ const MAPS = {
         if (!flag('gotDex')) await say(["Deb (your roommate): Morning, sunshine. Professor Rizzwell called. Like, four times.", "Deb: She said something about a 'Vibe-Dex' and that you're 'exactly her type of test subject.' Lab's on the east side of town."]);
         else if (!flag('badge1')) await say(["Deb: Heading to Brunchville? The gym there is a literal prison full of Karens.", "Deb: Bring snacks. And a lawyer."]);
         else await say("Deb: A BADGE? Okay, overachiever. Rent's still due Friday, though.");
-        if (!flag('debHeal')) return;
+        if (flag('gotDex') && G.state.party.some(m => m.hp < calcStats(m).hp || m.en < maxEnergy(m))) {
+          await say("Deb: Ugh, you look wrecked. Sit. I'm making you my famous hangover smoothie.");
+          healParty();
+          G.state.lastHeal = { map: 'loft', x: 7, y: 2, dir: 'down' };
+          await say("Your whole team feels refreshed! (Deb heals you anytime you're home.)", { sfx: 'heal' });
+        }
       } },
     ],
     signs: [{ x: 8, y: 1, text: "Your bed. It's seen things. Mostly Netflix." }, { x: 1, y: 1, text: "A shelf of self-help books: 'Rizz for Dummies', 'Catching Feelings (and Vibemon)'." }],

@@ -413,7 +413,7 @@ async function trainerBattle(trId, npc) {
   let party, name = tr.name, intro = tr.intro, win = tr.win, lose = tr.lose;
   if (tr.party === 'RIVAL') {
     const r = rivalId();
-    party = [makeMon(r, 5, { iv: { hp: 8, atk: 8, def: 8, cha: 8, spd: 8 } })];
+    party = [makeMon(r, 6, { iv: { hp: 8, atk: 8, def: 8, cha: 8, spd: 8 } })];
     name = DEX_BY_ID[r].name;
     intro = null; win = RIVAL_LINES[r].win; lose = RIVAL_LINES[r].lose;
   } else party = tr.party.map(([id, l]) => makeMon(id, l, { iv: { hp: 10, atk: 10, def: 10, cha: 10, spd: 10 } }));

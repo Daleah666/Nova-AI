@@ -85,12 +85,11 @@ const Art = (() => {
         }
       } else if (L.wings === 'moth') {
         for (const s of [-1, 1]) {
-          for (let r = 13; r > 0; r--) {
-            ctx.fillStyle = r > 11 ? shade(wc, -50) : (r > 4 ? wc : '#f0e8ff');
-            ctx.beginPath();
-            ctx.fillRect(cx + s * 14 - r, 22 - r, r * 2, Math.floor(r * 1.6));
-          }
-          px(ctx, '#1a1222', cx + s * 14 - 1, 20, 3, 3);
+          rows(ctx, shade(wc, -50), cx + s * 14, [[8, 3], [11, 8], [18, 10], [24, 8], [27, 4]]);
+          rows(ctx, wc, cx + s * 14, [[9, 2], [12, 7], [18, 9], [23, 7], [26, 3]]);
+          rows(ctx, shade(wc, -30), cx + s * 11, [[27, 3], [32, 5], [38, 4], [41, 1]]);
+          rows(ctx, '#f0e8ff', cx + s * 15, [[15, 2], [17, 3], [20, 2]]);
+          px(ctx, '#1a1222', cx + s * 15 - 1, 17, 2, 2);
         }
       } else if (L.wings === 'fairy') {
         ctx.globalAlpha = 0.75;

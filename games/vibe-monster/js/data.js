@@ -127,34 +127,34 @@ const DEX = [
     evo: { to: 'margaux2', lvl: 14 }, age: 29, height: "5'10\"", title: 'Ex-HR Enforcer',
     bio: "Former HR Director of a megacorp that imploded during a single Reply-All. Now a freelance enforcer with a telescoping lanyard-halberd, a pencil skirt with *opinions*, and a soft spot for rule-breakers she's legally required to write up. Cold, composed, devastatingly well-dressed.",
     entry: "Composure is her superpower; her drip is regulation-issue. Keeps a laminated copy of the Code of Conduct in her blazer, right over her heart. Fluent in passive-aggressive email.",
-    learn: [[1, 'lanyard'], [1, 'splash'], [4, 'wink'], [7, 'dripcheck'], [10, 'replyall'], [14, 'hrcleave']],
+    learn: [[1, 'smack'], [1, 'lanyard'], [4, 'wink'], [7, 'splash'], [10, 'dripcheck'], [12, 'replyall'], [14, 'hrcleave']],
     look: { sex: 'f', busty: true, skin: '#f0cdb4', hair: '#1c2f5e', hairStyle: 'braid', top: '#2a3550', bottom: '#2a3550', outfit: 'suit', accent: '#3fa7ff', glasses: true, prop: 'halberd', aura: 'drops' } },
   { id: 'margaux2', name: 'Margaux, Warden Supreme', full: 'Margaux Steelwell', heroine: true, types: ['Drip'], base: [78, 88, 92, 72, 62], exp: 175, catch: 0,
     age: 29, height: "5'10\" (6'2\" in boots)", title: 'Iron Composure',
     entry: "After a training montage set to synthwave, Margaux unlocked her final form: tailored greatcoat, executive-grade halberd, and a glare that files your complaint in triplicate.",
-    learn: [[1, 'lanyard'], [1, 'splash'], [4, 'wink'], [7, 'dripcheck'], [10, 'replyall'], [14, 'hrcleave'], [18, 'flex']],
+    learn: [[1, 'smack'], [1, 'lanyard'], [4, 'wink'], [7, 'splash'], [10, 'dripcheck'], [12, 'replyall'], [14, 'hrcleave'], [18, 'flex']],
     look: { sex: 'f', busty: true, skin: '#f0cdb4', hair: '#1c2f5e', hairStyle: 'braid', top: '#121a30', bottom: '#121a30', outfit: 'coat', accent: '#7fd0ff', glasses: true, prop: 'halberd', crown: '#7fd0ff', aura: 'drops' } },
   { id: 'tansy', name: 'Princess Tansy', full: 'Princess Tansy Bronzé', heroine: true, types: ['Spicy'], base: [46, 50, 42, 64, 66], exp: 62, catch: 0,
     evo: { to: 'tansy2', lvl: 14 }, age: 24, height: "5'6\" (5'11\" in platforms)", title: 'Repossessed Royalty',
     bio: "Crown princess of the Kingdom of Malibu Mall — until a hostile takeover by the Brunch Empire repossessed her castle, her credit cards, and her three emotional-support handbags. Spoiled, sun-kissed, and like, totally going to fix everything. Somehow.",
     entry: "Has never paid for her own drink. Her bedazzled scepter doubles as a selfie stick. Believes 'budget' is a type of airline she'll never fly.",
-    learn: [[1, 'tanflick'], [1, 'hottake'], [4, 'hairflip'], [7, 'likeew'], [10, 'smooch'], [14, 'solardiva']],
+    learn: [[1, 'smack'], [1, 'tanflick'], [4, 'hairflip'], [7, 'hottake'], [9, 'likeew'], [11, 'smooch'], [14, 'solardiva']],
     look: { sex: 'f', busty: true, skin: '#a8673e', hair: '#ff4fa3', hairStyle: 'buns', top: '#ffd23f', bottom: '#ff4fa3', outfit: 'crop', accent: '#ffffff', shades: true, crown: '#ffd23f', prop: 'scepter', aura: 'flame' } },
   { id: 'tansy2', name: 'Empress Tansy', full: 'Princess Tansy Bronzé', heroine: true, types: ['Spicy'], base: [70, 76, 64, 100, 96], exp: 175, catch: 0,
     age: 24, height: "5'6\" (6'1\" in platforms)", title: 'Solar Diva',
     entry: "Self-crowned Empress of the Sun after realizing she IS the main character. Her gown has its own weather system. Still hasn't paid for a drink.",
-    learn: [[1, 'tanflick'], [1, 'hottake'], [4, 'hairflip'], [7, 'likeew'], [10, 'smooch'], [14, 'solardiva'], [18, 'bedroom']],
+    learn: [[1, 'smack'], [1, 'tanflick'], [4, 'hairflip'], [7, 'hottake'], [9, 'likeew'], [11, 'smooch'], [14, 'solardiva'], [18, 'bedroom']],
     look: { sex: 'f', busty: true, skin: '#a8673e', hair: '#ff4fa3', hairStyle: 'wild', top: '#ff7a1a', bottom: '#ffd23f', outfit: 'gown', accent: '#fff3a0', shades: true, crown: '#ffd23f', bigCrown: true, prop: 'scepter', wings: 'fairy', wingColor: '#ffcf6a', aura: 'flame' } },
   { id: 'hilde', name: 'General Hilde', full: 'General Brunhilde Thornvale', heroine: true, types: ['Bloom'], base: [54, 62, 56, 46, 44], exp: 64, catch: 0,
     evo: { to: 'hilde2', lvl: 14 }, age: 31, height: "6'1\"", title: 'Retired Demon General',
     bio: "The undefeated top general of the Infernal Imperial Army — who quit mid-war because she wanted to grow tomatoes and figure out who she is outside the armor. Stoic, horned, painfully earnest, and secretly a hopeless romantic. Her greatsword is now a garden tool.",
     entry: "Can cleave a siege tower in half but cries at rom-coms. Speaks in formal battle commands even when ordering coffee. Her horns are 100% natural, thank you.",
-    learn: [[1, 'pommel'], [1, 'vine'], [4, 'pheromone'], [7, 'thornjab'], [10, 'thorny'], [14, 'greatsword']],
+    learn: [[1, 'pommel'], [1, 'thornjab'], [4, 'pheromone'], [7, 'vine'], [10, 'thorny'], [14, 'greatsword']],
     look: { sex: 'f', busty: true, skin: '#c98f8f', hair: '#e8e8f0', hairStyle: 'long', top: '#3a4a3a', bottom: '#2a2a2a', outfit: 'armor', accent: '#4cc96b', horns: '#2a1a1a', bigHorns: true, prop: 'sword', aura: 'leaves' } },
   { id: 'hilde2', name: 'Hilde, Thorn Warlord', full: 'General Brunhilde Thornvale', heroine: true, types: ['Bloom'], base: [82, 96, 84, 66, 60], exp: 175, catch: 0,
     age: 31, height: "6'1\"", title: 'Blooming Warlord',
     entry: "Made peace with her past by forging her old armor into a greenhouse. Now wears rose-vine plate and a cape that smells like fresh basil. Still terrifying. Still cries at rom-coms.",
-    learn: [[1, 'pommel'], [1, 'vine'], [4, 'pheromone'], [7, 'thornjab'], [10, 'thorny'], [14, 'greatsword'], [18, 'flex']],
+    learn: [[1, 'pommel'], [1, 'thornjab'], [4, 'pheromone'], [7, 'vine'], [10, 'thorny'], [14, 'greatsword'], [18, 'flex']],
     look: { sex: 'f', busty: true, skin: '#c98f8f', hair: '#e8e8f0', hairStyle: 'wild', top: '#1f5a2e', bottom: '#1f5a2e', outfit: 'armor', accent: '#ff7fb0', horns: '#2a1a1a', bigHorns: true, flower: '#ff7fb0', prop: 'sword', wings: 'bat', wingColor: '#2f4a2f', aura: 'leaves' } },
 
   // ---- Wild Vibemon ----
@@ -239,9 +239,9 @@ const ITEMS = {
 // Trainer definitions. party: [[speciesId, level], ...] or 'RIVAL'
 const TRAINERS = {
   rival_lab: { name: 'RIVAL', cls: 'Rival', party: 'RIVAL', prize: 120, sprite: 'rival' },
-  bro_brad: { name: 'Brad', cls: 'Gym Bro', party: [['chaddeus', 4], ['chaddeus', 5]], prize: 20, sprite: 'bro',
+  bro_brad: { name: 'Brad', cls: 'Gym Bro', party: [['chaddeus', 4]], prize: 30, sprite: 'bro',
     intro: "Brad: Bro. BRO. You looking at my gains? Let's battle, king.", win: "Brad: Respect, king. I'm gonna go cry in the sauna." },
-  influ_kayleigh: { name: 'Kayleigh', cls: 'Influencer', party: [['basicbecca', 5], ['voltina', 5]], prize: 25, sprite: 'influencer',
+  influ_kayleigh: { name: 'Kayleigh', cls: 'Influencer', party: [['basicbecca', 4], ['voltina', 5]], prize: 25, sprite: 'influencer',
     intro: "Kayleigh: OMG, hold on, I need to film this battle for my story!", win: "Kayleigh: Ugh, deleting this. It's not on brand." },
   goth_raven: { name: 'Raven', cls: 'Goth Girl', party: [['mothrina', 7], ['mothrina', 8]], prize: 30, sprite: 'goth',
     intro: "Raven: You walked into my forest. Ugh. Now I have to *feel* something.", win: "Raven: That was... almost interesting. Don't tell anyone." },
@@ -261,8 +261,8 @@ const TRAINERS = {
     lose: "Warden Karen-Lynn: Next time, ask permission before losing." },
 };
 
-// Your rival is the heroine whose type beats yours.
-const RIVAL_OF = { margaux: 'hilde', tansy: 'margaux', hilde: 'tansy' };
+// Your rival is the heroine your type beats (she shows up a level ahead to compensate).
+const RIVAL_OF = { margaux: 'tansy', tansy: 'hilde', hilde: 'margaux' };
 const RIVAL_LINES = {
   margaux: { intro: "Margaux: Per company policy, I'm required to evaluate you. Brace yourself.", win: "Margaux: ...Noted. I'll be filing this loss under 'Lessons Learned.'", lose: "Margaux: Performance review: needs improvement." },
   tansy: { intro: "Tansy: OMG, you're, like, SO going down. My nails are literally done for this.", win: "Tansy: Ugh! I broke a nail. You owe me a manicure. And a kingdom.", lose: "Tansy: Bye, Felicia~ ♡" },
