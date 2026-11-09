@@ -19,11 +19,11 @@ Open [http://localhost:5173](http://localhost:5173).
 | `npm run dev` | Vite studio + local `/api` helpers |
 | `npm run build` | Production bundle |
 | `npm run preview` | Serve the bundle (API helpers are dev-server only) |
-| `npm test` | Flash-rate cap, safety gate, template, Drive-ID tests |
+| `npm test` | Flash-rate cap, safety gate, bundled stills, template, Drive-ID tests |
 
 ## What you can do
 
-1. **Visuals** — Built-in stills work offline. Upload files or a local folder. Optionally load a Google Drive folder you pick (OAuth or folder ID + API key).
+1. **Visuals** — Built-in stills work offline: six bundled bimbo / girly / transformation art files in `public/stills/` plus hypnotic SVG patterns. Upload files or a local folder as a fallback. Optionally load a Google Drive folder you pick (OAuth or folder ID + API key).
 2. **Script** — Templates plus a full editor. Default goal is stay as girly/feminine as possible. Soft bimbofication is an optional template. Import/export `.txt`.
 3. **Audio** — **Silent**: affirmations mixed very low under a brown-noise carrier. **Binaural**: stereo beats (headphones) plus an optional voiced layer. Cartesia TTS if `CARTESIA_API_KEY` is set; otherwise Web Audio + `speechSynthesis`.
 4. **Session** — One click starts a loop of the chosen audio + visual cycle. **STOP** (or Escape) ends it. Pause/Resume stay visible.

@@ -1,5 +1,35 @@
 import type { VisualItem } from "../types";
 
+/** Bundled art served from `public/stills/` (copied as-is, not restyled). */
+export const ART_STILLS_PUBLIC_PATH = "/stills";
+
+export const ART_STILLS = [
+  { id: "art-01-pink-alley", name: "Pink alley", file: "01-pink-alley.jpg" },
+  { id: "art-02-oh-heat", name: "Oh heat", file: "02-oh-heat.png" },
+  { id: "art-03-gyaru-milkshake", name: "Gyaru milkshake", file: "03-gyaru-milkshake.jpg" },
+  { id: "art-04-bimbofication-sequence", name: "Bimbofication sequence", file: "04-bimbofication-sequence.png" },
+  { id: "art-05-glasses-pout", name: "Glasses pout", file: "05-glasses-pout.png" },
+  { id: "art-06-glasses-open", name: "Glasses open", file: "06-glasses-open.png" },
+] as const;
+
+export function artStillVisuals(): VisualItem[] {
+  return ART_STILLS.map((still) => ({
+    id: still.id,
+    name: still.name,
+    source: "built-in" as const,
+    src: `${ART_STILLS_PUBLIC_PATH}/${still.file}`,
+  }));
+}
+
+/** Keep built-in stills; preserve Drive extras; replace the previous local set. */
+export function withLocalFolder(existing: VisualItem[], local: VisualItem[]): VisualItem[] {
+  return [
+    ...existing.filter((item) => item.source === "built-in"),
+    ...existing.filter((item) => item.source === "drive"),
+    ...local.filter((item) => item.source === "local"),
+  ];
+}
+
 function svgUri(svg: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.trim())}`;
 }
@@ -37,7 +67,7 @@ export function builtInVisuals(): VisualItem[] {
     })
     .join("");
 
-  return [
+  const hypnoPatterns: VisualItem[] = [
     {
       id: "builtin-rose-well",
       name: "Rose well",
@@ -106,4 +136,6 @@ export function builtInVisuals(): VisualItem[] {
       </svg>`),
     },
   ];
+
+  return [...artStillVisuals(), ...hypnoPatterns];
 }

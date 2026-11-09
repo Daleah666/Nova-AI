@@ -19,7 +19,7 @@ import {
   requestDriveToken,
 } from "./lib/drive";
 import { clampHz, clampIntervalMs, DEFAULT_HZ, HARD_MAX_HZ, hzToIntervalMs } from "./lib/flash";
-import { builtInVisuals } from "./lib/hypnoVisuals";
+import { builtInVisuals, withLocalFolder } from "./lib/hypnoVisuals";
 import { acceptSafety, hasAcceptedSafety } from "./lib/safety";
 import {
   loadFolderId,
@@ -160,11 +160,9 @@ export function App() {
       src: urls[i],
       source: "local",
     }));
-    setVisuals((prev) => {
-      const kept = prev.filter((v) => v.source === "built-in");
-      return [...kept, ...prev.filter((v) => v.source === "drive"), ...next];
-    });
-    setStatus(`Added ${next.length} local image${next.length === 1 ? "" : "s"}.`);
+    if (!next.length) return;
+    setVisuals((prev) => withLocalFolder(prev, next));
+    setStatus(`Added ${next.length} local image${next.length === 1 ? "" : "s"}. Built-in stills stay in the cycle.`);
   }
 
   async function loadDrive(kind: "oauth" | "apikey") {
@@ -356,8 +354,9 @@ export function App() {
           <section className="panel">
             <h2>Visuals</h2>
             <p className="hint">
-              Built-in hypnotic stills work offline. Upload a folder, or pull a Google Drive folder
-              you pick. No session starts from loading pictures.
+              Six bundled art stills plus hypnotic patterns cycle offline. Upload images or a local
+              folder as a fallback, or pull a Google Drive folder you pick. Loading pictures never
+              starts a session.
             </p>
             <FlashStage
               currentSrc={current?.src ?? ""}
